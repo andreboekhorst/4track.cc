@@ -5,12 +5,19 @@ const CONFIG = {
     bitDepth: 8, // 8 | 16 | 32 (affects future export size)
     maxSeconds: 180, // max recording length per track
     tracks: 4, // number of tracks
+    // trim: {
+    //   default: -1,       // initial slider position. -1 (LINE/clean) to 1 (MIC/driven).
+    //   gainMin: 2.0,      // gain at LINE (-1). Min 0.1, max ~3.0. Lower = quieter clean signal. Higher = louder clean signal.
+    //   gainRange: 2.0,    // extra gain at MIC (+1). Min 0, max ~8.0. Higher = more drive into saturation. Lower = subtler.
+    //   curveBase: 1,      // waveshaper k at LINE. Min 0.5, max ~5. Higher = saturation even at LINE. Lower = cleaner.
+    //   curveRange: 20,    // extra k at MIC. Min 5, max ~50. Higher = harder saturation at MIC. Lower = gentler.
+    // },
     trim: {
-        default: -1, // initial slider position. -1 (LINE/clean) to 1 (MIC/driven).
-        gainMin: 0.9, // gain at LINE (-1). Min 0.1, max ~2.0. Lower = quieter clean signal. Higher = louder clean signal.
-        gainRange: 2.0, // extra gain at MIC (+1). Min 0, max ~8.0. Higher = more drive into saturation. Lower = subtler.
-        curveBase: 1, // waveshaper k at LINE. Min 0.5, max ~5. Higher = saturation even at LINE. Lower = cleaner.
-        curveRange: 20, // extra k at MIC. Min 5, max ~50. Higher = harder saturation at MIC. Lower = gentler.
+        default: -1, // keep default at LINE
+        gainMin: 1.4, // clean but solid level at LINE
+        gainRange: 1.6, // moderate extra drive toward MIC
+        curveBase: 0.8, // very clean at LINE
+        curveRange: 12, // gentler saturation growth
     },
 };
 /** How often we update the time display and check for playback end (UI only; audio is sample-accurate). */
@@ -56,6 +63,8 @@ let masterGain = null;
 let inputGainNode = null;
 let trimGainNode = null;
 let waveShaperNode = null;
+/** Recording volume node – sits after the waveshaper; baked into the track. */
+let recVolNode = null;
 /** Playback state when using Web Audio (so we can pause/resume and know if we're playing). */
 let playbackStartTime = 0;
 let playbackOffset = 0;
@@ -91,14 +100,14 @@ function ensureChannelStrips() {
         panNodes.push(pan);
     }
 }
-/** Generate a tanh-based soft saturation curve. intensity 0 = near-linear, 1 = aggressive. */
+/** Generate a saturation curve that crossfades from linear (intensity=0) to tanh (intensity=1). */
 function makeSaturationCurve(intensity) {
     const n = 8192;
     const curve = new Float32Array(new ArrayBuffer(n * 4));
     const k = CONFIG.trim.curveBase + intensity * CONFIG.trim.curveRange;
     for (let i = 0; i < n; i++) {
         const x = (i / (n - 1)) * 2 - 1; // map to -1..+1
-        curve[i] = Math.tanh(k * x);
+        curve[i] = x + (Math.tanh(k * x) - x) * intensity; // linear at 0, tanh at 1
     }
     return curve;
 }
@@ -324,12 +333,16 @@ recordBtn.addEventListener("click", async () => {
         trimGainNode = ctx.createGain();
         waveShaperNode = ctx.createWaveShaper();
         waveShaperNode.oversample = "4x";
+        recVolNode = ctx.createGain();
+        const recVolSlider = document.getElementById("rec-vol");
+        recVolNode.gain.value = parseFloat(recVolSlider?.value ?? "0.75");
         const trimSlider = document.getElementById("trim");
         applyTrim(parseFloat(trimSlider?.value ?? "0"));
         source.connect(inputGainNode);
         inputGainNode.connect(trimGainNode);
         trimGainNode.connect(waveShaperNode);
-        waveShaperNode.connect(worklet);
+        waveShaperNode.connect(recVolNode);
+        recVolNode.connect(worklet);
         worklet.connect(ctx.destination); // pass-through = low-latency monitoring
         recordedChunks = [];
         worklet.port.onmessage = (e) => {
@@ -373,9 +386,11 @@ function stopWorkletRecording() {
     inputGainNode?.disconnect();
     trimGainNode?.disconnect();
     waveShaperNode?.disconnect();
+    recVolNode?.disconnect();
     inputGainNode = null;
     trimGainNode = null;
     waveShaperNode = null;
+    recVolNode = null;
     // Stop old worklet from receiving input and from posting into recordedChunks
     if (source)
         source.disconnect();
@@ -462,6 +477,11 @@ stopBtn.addEventListener("click", () => {
         trimSlider.value = String(CONFIG.trim.default);
     trimSlider?.addEventListener("input", () => {
         applyTrim(parseFloat(trimSlider.value));
+    });
+    const recVolSlider = document.getElementById("rec-vol");
+    recVolSlider?.addEventListener("input", () => {
+        if (recVolNode)
+            recVolNode.gain.value = parseFloat(recVolSlider.value);
     });
 })();
 updatePlayButtonState();
