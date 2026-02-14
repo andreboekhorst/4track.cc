@@ -1,7 +1,7 @@
 /** Tweak these values and refresh to compare quality / file-size trade-offs. */
 const CONFIG = {
   sampleRate: 48000,   // 44100 | 48000
-  bitDepth: 8,        // 8 | 16 | 32 (affects future export size)
+  bitDepth: 16,        // 8 | 16 | 32 (affects future export size)
   maxSeconds: 180,     // max recording length per track
   tracks: 4,           // number of tracks
   trim: {
@@ -219,6 +219,150 @@ function buildBufferFromPCM(
     }
   }
   buffers[trackIndex] = buf;
+  updatePlayButtonState();
+}
+
+/** Convert Float32 PCM [-1,1] to the target bit depth for export. */
+function quantizePCM(float32: Float32Array, bitDepth: number): ArrayBuffer {
+  if (bitDepth === 32) {
+    const out = new Float32Array(float32.length);
+    out.set(float32);
+    return out.buffer as ArrayBuffer;
+  }
+  if (bitDepth === 16) {
+    const out = new Int16Array(float32.length);
+    for (let i = 0; i < float32.length; i++) {
+      const s = Math.max(-1, Math.min(1, float32[i]));
+      out[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+    }
+    return out.buffer;
+  }
+  // 8-bit unsigned, center at 128
+  const out = new Uint8Array(float32.length);
+  for (let i = 0; i < float32.length; i++) {
+    const s = Math.max(-1, Math.min(1, float32[i]));
+    out[i] = Math.round((s + 1) * 0.5 * 255);
+  }
+  return out.buffer;
+}
+
+/** Convert quantized PCM data back to Float32 [-1,1] for AudioBuffer. */
+function dequantizePCM(data: ArrayBuffer, bitDepth: number): Float32Array {
+  if (bitDepth === 32) return new Float32Array(data);
+  if (bitDepth === 16) {
+    const int16 = new Int16Array(data);
+    const out = new Float32Array(int16.length);
+    for (let i = 0; i < int16.length; i++) {
+      out[i] = int16[i] < 0 ? int16[i] / 0x8000 : int16[i] / 0x7FFF;
+    }
+    return out;
+  }
+  // 8-bit unsigned, center at 128
+  const uint8 = new Uint8Array(data);
+  const out = new Float32Array(uint8.length);
+  for (let i = 0; i < uint8.length; i++) {
+    out[i] = (uint8[i] / 255) * 2 - 1;
+  }
+  return out;
+}
+
+/** Export all tracks + mixer settings as a downloadable .4trk file. */
+function exportProject(): void {
+  const trackMeta: { samples: number; volume: number; pan: number; trimStart: number }[] = [];
+  const pcmParts: ArrayBuffer[] = [];
+
+  for (let i = 0; i < CONFIG.tracks; i++) {
+    const buf = buffers[i];
+    if (buf) {
+      const float32 = buf.getChannelData(0);
+      const quantized = quantizePCM(float32, CONFIG.bitDepth);
+      pcmParts.push(quantized);
+      trackMeta.push({
+        samples: float32.length,
+        volume: gainNodes[i]?.gain.value ?? 0.5,
+        pan: panNodes[i]?.pan.value ?? 0,
+        trimStart: trimStart[i] ?? 0,
+      });
+    } else {
+      pcmParts.push(new ArrayBuffer(0));
+      trackMeta.push({
+        samples: 0,
+        volume: gainNodes[i]?.gain.value ?? 0.5,
+        pan: panNodes[i]?.pan.value ?? 0,
+        trimStart: trimStart[i] ?? 0,
+      });
+    }
+  }
+
+  const metadata = JSON.stringify({
+    sampleRate: CONFIG.sampleRate,
+    bitDepth: CONFIG.bitDepth,
+    masterVolume: masterGain?.gain.value ?? 0.5,
+    tracks: trackMeta,
+  });
+
+  const encoder = new TextEncoder();
+  const metaBytes = encoder.encode(metadata);
+  const metaLength = new Uint32Array([metaBytes.length]);
+
+  const blob = new Blob([metaLength, metaBytes, ...pcmParts], { type: "application/octet-stream" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "recording.4trk";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** Load a .4trk file and restore all tracks + mixer settings. */
+async function importProject(file: File): Promise<void> {
+  const arrayBuffer = await file.arrayBuffer();
+  const view = new DataView(arrayBuffer);
+
+  // Read metadata
+  const metaLength = view.getUint32(0, true);
+  const metaBytes = new Uint8Array(arrayBuffer, 4, metaLength);
+  const metadata = JSON.parse(new TextDecoder().decode(metaBytes));
+
+  const ctx = getAudioContext();
+  const bytesPerSample = metadata.bitDepth / 8;
+  let offset = 4 + metaLength;
+
+  // Restore each track
+  for (let i = 0; i < metadata.tracks.length && i < CONFIG.tracks; i++) {
+    const t = metadata.tracks[i];
+    if (t.samples > 0) {
+      const byteLen = t.samples * bytesPerSample;
+      const pcmSlice = arrayBuffer.slice(offset, offset + byteLen);
+      offset += byteLen;
+      const float32 = dequantizePCM(pcmSlice, metadata.bitDepth);
+      const audioBuf = ctx.createBuffer(1, float32.length, metadata.sampleRate);
+      audioBuf.getChannelData(0).set(float32);
+      buffers[i] = audioBuf;
+    } else {
+      buffers[i] = null;
+    }
+
+    // Restore mixer settings
+    trimStart[i] = t.trimStart ?? 0;
+    ensureChannelStrips();
+    gainNodes[i].gain.value = t.volume ?? 0.5;
+    panNodes[i].pan.value = t.pan ?? 0;
+
+    // Update UI sliders
+    const volSlider = document.getElementById(`vol-${i}`) as HTMLInputElement | null;
+    const panSlider = document.getElementById(`pan-${i}`) as HTMLInputElement | null;
+    if (volSlider) volSlider.value = String(t.volume ?? 0.5);
+    if (panSlider) panSlider.value = String(t.pan ?? 0);
+  }
+
+  // Restore master volume
+  ensureChannelStrips();
+  if (masterGain) masterGain.gain.value = metadata.masterVolume ?? 0.5;
+  const masterSlider = document.getElementById("master-vol") as HTMLInputElement | null;
+  if (masterSlider) masterSlider.value = String(metadata.masterVolume ?? 0.5);
+
+  rewindAll();
   updatePlayButtonState();
 }
 
@@ -513,6 +657,20 @@ stopBtn.addEventListener("click", () => {
 })();
 
 updatePlayButtonState();
+
+// Save / Load project file
+const saveBtn = document.getElementById("save-project") as HTMLButtonElement | null;
+const loadBtn = document.getElementById("load-project") as HTMLButtonElement | null;
+const fileInput = document.getElementById("file-input") as HTMLInputElement | null;
+saveBtn?.addEventListener("click", () => exportProject());
+loadBtn?.addEventListener("click", () => fileInput?.click());
+fileInput?.addEventListener("change", () => {
+  const file = fileInput.files?.[0];
+  if (file) {
+    importProject(file).catch((err) => console.error("Import failed:", err));
+    fileInput.value = ""; // allow re-selecting same file
+  }
+});
 
 // Log estimated file size based on CONFIG so you can compare trade-offs.
 {

@@ -57,6 +57,11 @@
     <div class="master">
       <label class="master-label">Master Vol <input type="range" id="master-vol" min="0" max="0.9" step="0.01" value="0.5"></label>
     </div>
+    <div class="file-controls">
+      <button type="button" id="save-project">Save</button>
+      <button type="button" id="load-project">Load</button>
+      <input type="file" id="file-input" accept=".4trk" hidden>
+    </div>
     <audio id="audio-1" hidden></audio>
     <audio id="audio-2" hidden></audio>
     <audio id="audio-3" hidden></audio>
