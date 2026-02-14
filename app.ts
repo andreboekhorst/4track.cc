@@ -1,4 +1,11 @@
-const MAX_SECONDS = 60;
+/** Tweak these values and refresh to compare quality / file-size trade-offs. */
+const CONFIG = {
+  sampleRate: 48000,   // 44100 | 48000
+  bitDepth: 8,        // 8 | 16 | 32 (affects future export size)
+  maxSeconds: 180,     // max recording length per track
+  tracks: 4,           // number of tracks
+};
+
 /** How often we update the time display and check for playback end (UI only; audio is sample-accurate). */
 const PLAYBACK_TICK_MS = 50;
 
@@ -34,6 +41,10 @@ const tracks: (string | null)[] = [null, null, null, null];
 const buffers: (AudioBuffer | null)[] = [null, null, null, null];
 /** Per-track trim: skip this many seconds at start of buffer (latency compensation). */
 const trimStart: number[] = [0, 0, 0, 0];
+/** Persistent per-track gain nodes for volume control. */
+const gainNodes: GainNode[] = [];
+/** Persistent per-track panner nodes for stereo panning. */
+const panNodes: StereoPannerNode[] = [];
 
 /** Playback state when using Web Audio (so we can pause/resume and know if we're playing). */
 let playbackStartTime = 0;
@@ -46,10 +57,27 @@ function getAudioContext(): AudioContext {
   if (!audioContext) {
     audioContext = new AudioContext({
       latencyHint: "interactive",
-      sampleRate: 48000,
+      sampleRate: CONFIG.sampleRate,
     });
   }
+  ensureChannelStrips();
   return audioContext;
+}
+
+/** Create persistent GainNode + StereoPannerNode per track (idempotent). */
+function ensureChannelStrips(): void {
+  if (gainNodes.length > 0) return;
+  const ctx = audioContext!;
+  for (let i = 0; i < CONFIG.tracks; i++) {
+    const gain = ctx.createGain();
+    gain.gain.value = 0.5;
+    const pan = ctx.createStereoPanner();
+    pan.pan.value = 0;
+    gain.connect(pan);
+    pan.connect(ctx.destination);
+    gainNodes.push(gain);
+    panNodes.push(pan);
+  }
 }
 
 function setTime(s: number) {
@@ -177,7 +205,7 @@ function startWebAudioPlayback(offsetSeconds: number): void {
     if (playDuration <= 0) continue;
     const src = ctx.createBufferSource();
     src.buffer = buf;
-    src.connect(ctx.destination);
+    src.connect(gainNodes[i]);
     src.start(startTime, startOffset, startTime + playDuration);
     activePlaybackSources.push(src);
   }
@@ -209,7 +237,7 @@ function playOtherTracksForMonitoring(excludeIndex: number): void {
     if (!buf) continue;
     const src = ctx.createBufferSource();
     src.buffer = buf;
-    src.connect(ctx.destination);
+    src.connect(gainNodes[i]);
     src.start(startTime);
     monitoringSources.push(src);
   }
@@ -230,7 +258,7 @@ const AUDIO_CONSTRAINTS: MediaTrackConstraints = {
   echoCancellation: false,
   noiseSuppression: false,
   autoGainControl: false,
-  sampleRate: { ideal: 48000 },
+  sampleRate: { ideal: CONFIG.sampleRate },
   // Chrome: request low capture latency (seconds). Ignored where not supported.
   latency: { ideal: 0 },
 } as MediaTrackConstraints;
@@ -287,7 +315,7 @@ recordBtn.addEventListener("click", async () => {
     playOtherTracksForMonitoring(selectedTrackIndex);
     timerId = window.setInterval(() => {
       const next = seconds + 1;
-      if (next >= MAX_SECONDS) {
+      if (next >= CONFIG.maxSeconds) {
         stopBtn.click();
         return;
       }
@@ -327,7 +355,7 @@ function stopWorkletRecording(): void {
 
   const trimSamples = Math.max(
     0,
-    Math.round((ctx?.sampleRate ?? 48000) * recordLatencySeconds)
+    Math.round((ctx?.sampleRate ?? CONFIG.sampleRate) * recordLatencySeconds)
   );
 
   if (recordedChunks.length && ctx) {
@@ -385,4 +413,30 @@ stopBtn.addEventListener("click", () => {
   }
 });
 
+/** Wire up mixer slider event listeners for volume and pan controls. */
+(function initMixerControls(): void {
+  for (let i = 0; i < CONFIG.tracks; i++) {
+    const volSlider = document.getElementById(`vol-${i}`) as HTMLInputElement | null;
+    const panSlider = document.getElementById(`pan-${i}`) as HTMLInputElement | null;
+    volSlider?.addEventListener("input", () => {
+      ensureChannelStrips();
+      gainNodes[i].gain.value = parseFloat(volSlider.value);
+    });
+    panSlider?.addEventListener("input", () => {
+      ensureChannelStrips();
+      panNodes[i].pan.value = parseFloat(panSlider.value);
+    });
+  }
+})();
+
 updatePlayButtonState();
+
+// Log estimated file size based on CONFIG so you can compare trade-offs.
+{
+  const bytesPerSample = CONFIG.bitDepth / 8;
+  const totalBytes = CONFIG.tracks * CONFIG.maxSeconds * CONFIG.sampleRate * bytesPerSample;
+  const mb = (totalBytes / (1024 * 1024)).toFixed(2);
+  console.log(
+    `[4track] Estimated max file size: ${CONFIG.tracks} tracks × ${CONFIG.maxSeconds}s × ${CONFIG.sampleRate} Hz × ${bytesPerSample} bytes = ${mb} MB`
+  );
+}

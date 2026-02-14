@@ -88,3 +88,46 @@ button:disabled {
 #record:hover:not(:disabled) {
   background: #e00;
 }
+
+.mixer {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #333;
+}
+
+.channel-strip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: #222;
+  border-radius: 6px;
+  min-width: 80px;
+}
+
+.channel-label {
+  font-size: 0.75rem;
+  color: #aaa;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.channel-strip label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.7rem;
+  color: #888;
+  gap: 0.2rem;
+}
+
+.channel-strip input[type="range"] {
+  width: 70px;
+  accent-color: #6cf;
+}

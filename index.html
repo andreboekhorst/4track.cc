@@ -24,6 +24,28 @@
       <button type="button" id="pause" disabled>Pause</button>
       <button type="button" id="rewind" disabled>Rewind</button>
     </div>
+    <div class="mixer">
+      <div class="channel-strip">
+        <span class="channel-label">Track 1</span>
+        <label>Vol <input type="range" id="vol-0" min="0" max="1" step="0.01" value="0.5"></label>
+        <label>Pan <input type="range" id="pan-0" min="-1" max="1" step="0.01" value="0"></label>
+      </div>
+      <div class="channel-strip">
+        <span class="channel-label">Track 2</span>
+        <label>Vol <input type="range" id="vol-1" min="0" max="1" step="0.01" value="0.5"></label>
+        <label>Pan <input type="range" id="pan-1" min="-1" max="1" step="0.01" value="0"></label>
+      </div>
+      <div class="channel-strip">
+        <span class="channel-label">Track 3</span>
+        <label>Vol <input type="range" id="vol-2" min="0" max="1" step="0.01" value="0.5"></label>
+        <label>Pan <input type="range" id="pan-2" min="-1" max="1" step="0.01" value="0"></label>
+      </div>
+      <div class="channel-strip">
+        <span class="channel-label">Track 4</span>
+        <label>Vol <input type="range" id="vol-3" min="0" max="1" step="0.01" value="0.5"></label>
+        <label>Pan <input type="range" id="pan-3" min="-1" max="1" step="0.01" value="0"></label>
+      </div>
+    </div>
     <audio id="audio-1" hidden></audio>
     <audio id="audio-2" hidden></audio>
     <audio id="audio-3" hidden></audio>
