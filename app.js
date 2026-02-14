@@ -6,10 +6,11 @@ const CONFIG = {
     maxSeconds: 180, // max recording length per track
     tracks: 4, // number of tracks
     trim: {
-        gainMin: 0.9, // gain at LINE (-1). Lower = quieter clean signal. Higher = louder clean signal.
-        gainRange: 4.0, // extra gain added at MIC (+1). Higher = more drive into saturation. Lower = subtler effect.
-        curveBase: 3, // waveshaper k at LINE. Higher = saturation even at LINE. Lower = cleaner at LINE.
-        curveRange: 20, // extra k added at MIC. Higher = harder saturation at MIC. Lower = gentler saturation.
+        default: -1, // initial slider position. -1 (LINE/clean) to 1 (MIC/driven).
+        gainMin: 0.9, // gain at LINE (-1). Min 0.1, max ~2.0. Lower = quieter clean signal. Higher = louder clean signal.
+        gainRange: 2.0, // extra gain at MIC (+1). Min 0, max ~8.0. Higher = more drive into saturation. Lower = subtler.
+        curveBase: 1, // waveshaper k at LINE. Min 0.5, max ~5. Higher = saturation even at LINE. Lower = cleaner.
+        curveRange: 20, // extra k at MIC. Min 5, max ~50. Higher = harder saturation at MIC. Lower = gentler.
     },
 };
 /** How often we update the time display and check for playback end (UI only; audio is sample-accurate). */
@@ -457,6 +458,8 @@ stopBtn.addEventListener("click", () => {
         masterGain.gain.value = parseFloat(masterSlider.value);
     });
     const trimSlider = document.getElementById("trim");
+    if (trimSlider)
+        trimSlider.value = String(CONFIG.trim.default);
     trimSlider?.addEventListener("input", () => {
         applyTrim(parseFloat(trimSlider.value));
     });
