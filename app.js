@@ -43,6 +43,8 @@ const trimStart = [0, 0, 0, 0];
 const gainNodes = [];
 /** Persistent per-track panner nodes for stereo panning. */
 const panNodes = [];
+/** Master gain node for global volume control. */
+let masterGain = null;
 /** Playback state when using Web Audio (so we can pause/resume and know if we're playing). */
 let playbackStartTime = 0;
 let playbackOffset = 0;
@@ -64,13 +66,16 @@ function ensureChannelStrips() {
     if (gainNodes.length > 0)
         return;
     const ctx = audioContext;
+    masterGain = ctx.createGain();
+    masterGain.gain.value = 0.5;
+    masterGain.connect(ctx.destination);
     for (let i = 0; i < CONFIG.tracks; i++) {
         const gain = ctx.createGain();
         gain.gain.value = 0.5;
         const pan = ctx.createStereoPanner();
         pan.pan.value = 0;
         gain.connect(pan);
-        pan.connect(ctx.destination);
+        pan.connect(masterGain);
         gainNodes.push(gain);
         panNodes.push(pan);
     }
@@ -398,6 +403,11 @@ stopBtn.addEventListener("click", () => {
             panNodes[i].pan.value = parseFloat(panSlider.value);
         });
     }
+    const masterSlider = document.getElementById("master-vol");
+    masterSlider?.addEventListener("input", () => {
+        ensureChannelStrips();
+        masterGain.gain.value = parseFloat(masterSlider.value);
+    });
 })();
 updatePlayButtonState();
 // Log estimated file size based on CONFIG so you can compare trade-offs.

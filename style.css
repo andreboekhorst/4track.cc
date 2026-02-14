@@ -131,3 +131,27 @@ button:disabled {
   width: 70px;
   accent-color: #6cf;
 }
+
+.master {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #333;
+  text-align: center;
+}
+
+.master-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #aaa;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.master-label input[type="range"] {
+  width: 120px;
+  accent-color: #6cf;
+}
