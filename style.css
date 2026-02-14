@@ -47,6 +47,31 @@ body {
   outline: none;
 }
 
+.trim-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  font-size: 0.75rem;
+  color: #aaa;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.trim-label input[type="range"] {
+  width: 100px;
+  accent-color: #f90;
+}
+
+.trim-range {
+  font-size: 0.6rem;
+  color: #666;
+  min-width: 2em;
+  text-align: center;
+}
+
 .latency {
   font-size: 0.75rem;
   color: #888;

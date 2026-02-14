@@ -4,6 +4,12 @@ const CONFIG = {
   bitDepth: 8,        // 8 | 16 | 32 (affects future export size)
   maxSeconds: 180,     // max recording length per track
   tracks: 4,           // number of tracks
+  trim: {
+    gainMin: 0.9,      // gain at LINE (-1). Lower = quieter clean signal. Higher = louder clean signal.
+    gainRange: 4.0,    // extra gain added at MIC (+1). Higher = more drive into saturation. Lower = subtler effect.
+    curveBase: 3,      // waveshaper k at LINE. Higher = saturation even at LINE. Lower = cleaner at LINE.
+    curveRange: 20,    // extra k added at MIC. Higher = harder saturation at MIC. Lower = gentler saturation.
+  },
 };
 
 /** How often we update the time display and check for playback end (UI only; audio is sample-accurate). */
@@ -47,6 +53,10 @@ const gainNodes: GainNode[] = [];
 const panNodes: StereoPannerNode[] = [];
 /** Master gain node for global volume control. */
 let masterGain: GainNode | null = null;
+/** Input processing chain nodes (global, not per-track). Created on record, torn down on stop. */
+let inputGainNode: GainNode | null = null;
+let trimGainNode: GainNode | null = null;
+let waveShaperNode: WaveShaperNode | null = null;
 
 /** Playback state when using Web Audio (so we can pause/resume and know if we're playing). */
 let playbackStartTime = 0;
@@ -82,6 +92,29 @@ function ensureChannelStrips(): void {
     pan.connect(masterGain);
     gainNodes.push(gain);
     panNodes.push(pan);
+  }
+}
+
+/** Generate a tanh-based soft saturation curve. intensity 0 = near-linear, 1 = aggressive. */
+function makeSaturationCurve(intensity: number): Float32Array {
+  const n = 8192;
+  const curve = new Float32Array(new ArrayBuffer(n * 4));
+  const k = CONFIG.trim.curveBase + intensity * CONFIG.trim.curveRange;
+  for (let i = 0; i < n; i++) {
+    const x = (i / (n - 1)) * 2 - 1; // map to -1..+1
+    curve[i] = Math.tanh(k * x);
+  }
+  return curve;
+}
+
+/** Apply current trim slider value to the input processing chain. */
+function applyTrim(sliderValue: number): void {
+  const norm = (sliderValue + 1) / 2; // -1..+1 → 0..1
+  if (trimGainNode) {
+    trimGainNode.gain.value = CONFIG.trim.gainMin + norm * CONFIG.trim.gainRange;
+  }
+  if (waveShaperNode) {
+    waveShaperNode.curve = makeSaturationCurve(norm) as Float32Array<ArrayBuffer>;
   }
 }
 
@@ -303,7 +336,21 @@ recordBtn.addEventListener("click", async () => {
     await ctx.audioWorklet.addModule(workletUrl);
     const source = ctx.createMediaStreamSource(stream);
     const worklet = new AudioWorkletNode(ctx, "recorder");
-    source.connect(worklet);
+
+    // Input processing chain: source → inputGain → trimGain → waveShaper → worklet
+    inputGainNode = ctx.createGain();
+    inputGainNode.gain.value = 1.0;
+    trimGainNode = ctx.createGain();
+    waveShaperNode = ctx.createWaveShaper();
+    waveShaperNode.oversample = "4x";
+
+    const trimSlider = document.getElementById("trim") as HTMLInputElement | null;
+    applyTrim(parseFloat(trimSlider?.value ?? "0"));
+
+    source.connect(inputGainNode);
+    inputGainNode.connect(trimGainNode);
+    trimGainNode.connect(waveShaperNode);
+    waveShaperNode.connect(worklet);
     worklet.connect(ctx.destination); // pass-through = low-latency monitoring
 
     recordedChunks = [];
@@ -348,9 +395,16 @@ function stopWorkletRecording(): void {
   recorderWorkletNode = null;
   recorderSourceNode = null;
 
+  // Tear down input processing chain
+  inputGainNode?.disconnect();
+  trimGainNode?.disconnect();
+  waveShaperNode?.disconnect();
+  inputGainNode = null;
+  trimGainNode = null;
+  waveShaperNode = null;
+
   // Stop old worklet from receiving input and from posting into recordedChunks
-  // (otherwise the next recording would get mixed with this worklet’s ongoing output)
-  if (source && worklet) source.disconnect(worklet);
+  if (source) source.disconnect();
   if (worklet) worklet.port.onmessage = null;
   worklet?.disconnect();
   if (source?.mediaStream) source.mediaStream.getTracks().forEach((t) => t.stop());
@@ -436,6 +490,10 @@ stopBtn.addEventListener("click", () => {
   masterSlider?.addEventListener("input", () => {
     ensureChannelStrips();
     masterGain!.gain.value = parseFloat(masterSlider.value);
+  });
+  const trimSlider = document.getElementById("trim") as HTMLInputElement | null;
+  trimSlider?.addEventListener("input", () => {
+    applyTrim(parseFloat(trimSlider.value));
   });
 })();
 
