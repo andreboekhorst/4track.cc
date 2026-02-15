@@ -5,13 +5,18 @@ const CONFIG = {
     bitDepth: 16, // 8 | 16 | 32 (affects future export size)
     maxSeconds: 180, // max recording length per track
     tracks: 4, // number of tracks
-    trim: {
-        default: -1, // initial slider position. -1 (LINE/clean) to 1 (MIC/driven).
-        gainMin: 1.4, // gain at LINE (-1). Min 0.1, max ~3.0. Lower = quieter clean signal. Higher = louder clean signal.
-        gainRange: 1.6, // extra gain at MIC (+1). Min 0, max ~8.0. Higher = more drive into saturation. Lower = subtler.
-        curveBase: 0.8, // waveshaper k at LINE. Min 0.5, max ~5. Higher = saturation even at LINE. Lower = cleaner.
-        curveRange: 12, // extra k at MIC. Min 5, max ~50. Higher = harder saturation at MIC. Lower = gentler.
-    },
+    /** Ordered input effects chain. Array order = signal flow order. Set enabled: false to bypass. */
+    inputFx: [
+        {
+            type: "trim",
+            enabled: false, // set to false to bypass trim+saturation for lower latency
+            default: -1, // initial slider position. -1 (LINE/clean) to 1 (MIC/driven).
+            gainMin: 1.4, // gain at LINE (-1). Min 0.1, max ~3.0. Lower = quieter clean signal. Higher = louder clean signal.
+            gainRange: 1.6, // extra gain at MIC (+1). Min 0, max ~8.0. Higher = more drive into saturation. Lower = subtler.
+            curveBase: 0.8, // waveshaper k at LINE. Min 0.5, max ~5. Higher = saturation even at LINE. Lower = cleaner.
+            curveRange: 12, // extra k at MIC. Min 5, max ~50. Higher = harder saturation at MIC. Lower = gentler.
+        },
+    ],
 };
 /** How often we update the time display and check for playback end (UI only; audio is sample-accurate). */
 const PLAYBACK_TICK_MS = 50;
@@ -58,8 +63,10 @@ let masterGain = null;
 let inputGainNode = null;
 let trimGainNode = null;
 let waveShaperNode = null;
-/** Recording volume node – sits after the waveshaper; baked into the track. */
+/** Recording volume node – sits after the FX chain; baked into the track. */
 let recVolNode = null;
+/** Active input FX nodes, in signal-flow order. Built on record start, torn down on stop. */
+let inputFxNodes = [];
 /** Playback state when using Web Audio (so we can pause/resume and know if we're playing). */
 let playbackStartTime = 0;
 let playbackOffset = 0;
@@ -96,10 +103,10 @@ function ensureChannelStrips() {
     }
 }
 /** Generate a saturation curve that crossfades from linear (intensity=0) to tanh (intensity=1). */
-function makeSaturationCurve(intensity) {
+function makeSaturationCurve(intensity, curveBase, curveRange) {
     const n = 8192;
     const curve = new Float32Array(new ArrayBuffer(n * 4));
-    const k = CONFIG.trim.curveBase + intensity * CONFIG.trim.curveRange;
+    const k = curveBase + intensity * curveRange;
     for (let i = 0; i < n; i++) {
         const x = (i / (n - 1)) * 2 - 1; // map to -1..+1
         curve[i] = x + (Math.tanh(k * x) - x) * intensity; // linear at 0, tanh at 1
@@ -108,13 +115,33 @@ function makeSaturationCurve(intensity) {
 }
 /** Apply current trim slider value to the input processing chain. */
 function applyTrim(sliderValue) {
+    const cfg = CONFIG.inputFx.find(fx => fx.type === "trim");
+    if (!cfg)
+        return;
     const norm = (sliderValue + 1) / 2; // -1..+1 → 0..1
     if (trimGainNode) {
-        trimGainNode.gain.value = CONFIG.trim.gainMin + norm * CONFIG.trim.gainRange;
+        trimGainNode.gain.value = cfg.gainMin + norm * cfg.gainRange;
     }
     if (waveShaperNode) {
-        waveShaperNode.curve = makeSaturationCurve(norm);
+        waveShaperNode.curve = makeSaturationCurve(norm, cfg.curveBase, cfg.curveRange);
     }
+}
+/** Registry of input FX builders. Each returns the AudioNode(s) for that effect. */
+const fxBuilders = {
+    trim(ctx, cfg) {
+        trimGainNode = ctx.createGain();
+        waveShaperNode = ctx.createWaveShaper();
+        waveShaperNode.oversample = "4x";
+        const trimSlider = document.getElementById("trim");
+        applyTrim(parseFloat(trimSlider?.value ?? String(cfg.default)));
+        return [trimGainNode, waveShaperNode];
+    },
+};
+/** Build the input FX chain from CONFIG. Returns nodes in signal-flow order. */
+function buildInputFxChain(ctx) {
+    return CONFIG.inputFx
+        .filter(fx => fx.enabled)
+        .flatMap(fx => fxBuilders[fx.type](ctx, fx));
 }
 function setTime(s) {
     seconds = s;
@@ -524,21 +551,20 @@ recordBtn.addEventListener("click", async () => {
         await ctx.audioWorklet.addModule(workletUrl);
         const source = ctx.createMediaStreamSource(stream);
         const worklet = new AudioWorkletNode(ctx, "recorder");
-        // Input processing chain: source → inputGain → trimGain → waveShaper → worklet
+        // Input processing chain: source → inputGain → [fx nodes] → recVol → worklet
         inputGainNode = ctx.createGain();
         inputGainNode.gain.value = 1.0;
-        trimGainNode = ctx.createGain();
-        waveShaperNode = ctx.createWaveShaper();
-        waveShaperNode.oversample = "4x";
         recVolNode = ctx.createGain();
         const recVolSlider = document.getElementById("rec-vol");
         recVolNode.gain.value = parseFloat(recVolSlider?.value ?? "0.75");
-        const trimSlider = document.getElementById("trim");
-        applyTrim(parseFloat(trimSlider?.value ?? "0"));
+        inputFxNodes = buildInputFxChain(ctx);
         source.connect(inputGainNode);
-        inputGainNode.connect(trimGainNode);
-        trimGainNode.connect(waveShaperNode);
-        waveShaperNode.connect(recVolNode);
+        let prev = inputGainNode;
+        for (const node of inputFxNodes) {
+            prev.connect(node);
+            prev = node;
+        }
+        prev.connect(recVolNode);
         recVolNode.connect(worklet);
         worklet.connect(ctx.destination); // pass-through = low-latency monitoring
         recordedChunks = [];
@@ -582,8 +608,9 @@ function stopWorkletRecording() {
     recorderSourceNode = null;
     // Tear down input processing chain
     inputGainNode?.disconnect();
-    trimGainNode?.disconnect();
-    waveShaperNode?.disconnect();
+    for (const node of inputFxNodes)
+        node.disconnect();
+    inputFxNodes = [];
     recVolNode?.disconnect();
     inputGainNode = null;
     trimGainNode = null;
@@ -674,8 +701,9 @@ stopBtn.addEventListener("click", () => {
         masterGain.gain.value = parseFloat(masterSlider.value);
     });
     const trimSlider = document.getElementById("trim");
-    if (trimSlider)
-        trimSlider.value = String(CONFIG.trim.default);
+    const trimCfg = CONFIG.inputFx.find(fx => fx.type === "trim");
+    if (trimSlider && trimCfg)
+        trimSlider.value = String(trimCfg.default);
     trimSlider?.addEventListener("input", () => {
         applyTrim(parseFloat(trimSlider.value));
     });
