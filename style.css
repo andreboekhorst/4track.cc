@@ -157,6 +157,14 @@ button:disabled {
   accent-color: #6cf;
 }
 
+.channel-level {
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  color: #6cf;
+  min-width: 2ch;
+  text-align: center;
+}
+
 .master {
   margin-top: 1rem;
   padding-top: 0.75rem;

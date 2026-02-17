@@ -8,12 +8,12 @@ const CONFIG = {
   inputFx: [
     {
       type: "trim" as const,
-      enabled: false,     // set to false to bypass trim+saturation for lower latency
+      enabled: true,     // set to false to bypass trim+saturation for lower latency
       default: -1,       // initial slider position. -1 (LINE/clean) to 1 (MIC/driven).
-      gainMin: 1.4,      // gain at LINE (-1). Min 0.1, max ~3.0. Lower = quieter clean signal. Higher = louder clean signal.
-      gainRange: 1.6,    // extra gain at MIC (+1). Min 0, max ~8.0. Higher = more drive into saturation. Lower = subtler.
+      gainMin: 0.2,      // gain at LINE (-1). Min 0.1, max ~3.0. Lower = quieter clean signal. Higher = louder clean signal.
+      gainRange: 1,    // extra gain at MIC (+1). Min 0, max ~8.0. Higher = more drive into saturation. Lower = subtler.
       curveBase: 0.8,    // waveshaper k at LINE. Min 0.5, max ~5. Higher = saturation even at LINE. Lower = cleaner.
-      curveRange: 12,    // extra k at MIC. Min 5, max ~50. Higher = harder saturation at MIC. Lower = gentler.
+      curveRange: 8,    // extra k at MIC. Min 5, max ~50. Higher = harder saturation at MIC. Lower = gentler.
     },
   ],
 };
@@ -59,6 +59,8 @@ const trimStart: number[] = [0, 0, 0, 0];
 const gainNodes: GainNode[] = [];
 /** Persistent per-track panner nodes for stereo panning. */
 const panNodes: StereoPannerNode[] = [];
+/** Persistent per-track analyser nodes for level metering. */
+const analyserNodes: AnalyserNode[] = [];
 /** Master gain node for global volume control. */
 let masterGain: GainNode | null = null;
 /** Input processing chain nodes (global, not per-track). Created on record, torn down on stop. */
@@ -69,6 +71,46 @@ let waveShaperNode: WaveShaperNode | null = null;
 let recVolNode: GainNode | null = null;
 /** Active input FX nodes, in signal-flow order. Built on record start, torn down on stop. */
 let inputFxNodes: AudioNode[] = [];
+
+/** Level meter DOM elements and animation state. */
+const levelEls: HTMLElement[] = [
+  document.getElementById("level-0")!,
+  document.getElementById("level-1")!,
+  document.getElementById("level-2")!,
+  document.getElementById("level-3")!,
+];
+let meterRafId: number | null = null;
+
+function updateMeters(): void {
+  const buf = new Float32Array(analyserNodes[0]?.fftSize ?? 256);
+  for (let i = 0; i < analyserNodes.length; i++) {
+    analyserNodes[i].getFloatTimeDomainData(buf);
+    let peak = 0;
+    for (let j = 0; j < buf.length; j++) {
+      const abs = Math.abs(buf[j]);
+      if (abs > peak) peak = abs;
+    }
+    const master = masterGain?.gain.value ?? 1;
+    const level = Math.min(100, Math.round(peak * master * 100));
+    if (levelEls[i]) levelEls[i].textContent = String(level);
+  }
+  meterRafId = requestAnimationFrame(updateMeters);
+}
+
+function startMeters(): void {
+  if (meterRafId !== null) return;
+  meterRafId = requestAnimationFrame(updateMeters);
+}
+
+function stopMeters(): void {
+  if (meterRafId !== null) {
+    cancelAnimationFrame(meterRafId);
+    meterRafId = null;
+  }
+  for (const el of levelEls) {
+    if (el) el.textContent = "0";
+  }
+}
 
 /** Playback state when using Web Audio (so we can pause/resume and know if we're playing). */
 let playbackStartTime = 0;
@@ -98,11 +140,15 @@ function ensureChannelStrips(): void {
   for (let i = 0; i < CONFIG.tracks; i++) {
     const gain = ctx.createGain();
     gain.gain.value = 0.5;
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 256;
     const pan = ctx.createStereoPanner();
     pan.pan.value = 0;
-    gain.connect(pan);
+    gain.connect(analyser);
+    analyser.connect(pan);
     pan.connect(masterGain);
     gainNodes.push(gain);
+    analyserNodes.push(analyser);
     panNodes.push(pan);
   }
 }
@@ -208,6 +254,7 @@ function rewindAll() {
   playbackOffset = 0;
   setTime(0);
   clearPlaybackTick();
+  stopMeters();
   pauseBtn.disabled = true;
   updatePlayButtonState();
 }
@@ -262,7 +309,6 @@ function mergeRecordingIntoBuffer(
   trimSamples: number,
   trackIndex: number,
   punchInSeconds: number,
-  latencySeconds: number,
 ): void {
   // 1. Flatten new PCM chunks with latency trim (same logic as buildBufferFromPCM)
   const totalRawSamples = chunks.reduce((sum, c) => sum + c.length, 0);
@@ -291,7 +337,7 @@ function mergeRecordingIntoBuffer(
   const existingTrim = trimStart[trackIndex] ?? 0;
   const punchInSample = Math.max(
     0,
-    Math.round((punchInSeconds + (existingBuffer ? existingTrim : latencySeconds)) * ctx.sampleRate)
+    Math.round((punchInSeconds + (existingBuffer ? existingTrim : 0)) * ctx.sampleRate)
   );
 
   // 3. Create result buffer
@@ -502,6 +548,7 @@ function startWebAudioPlayback(offsetSeconds: number): void {
   pauseBtn.disabled = false;
   rewindBtn.disabled = false;
 
+  startMeters();
   playbackTickId = window.setInterval(() => {
     const elapsed = ctx.currentTime - playbackStartTime;
     setTime(Math.floor(playbackOffset + elapsed));
@@ -621,6 +668,7 @@ recordBtn.addEventListener("click", async () => {
 
     setTime(Math.floor(punchInOffset));
     playOtherTracksForMonitoring(selectedTrackIndex, punchInOffset);
+    startMeters();
     timerId = window.setInterval(() => {
       const next = seconds + 1;
       if (next >= CONFIG.maxSeconds) {
@@ -669,6 +717,7 @@ function stopWorkletRecording(): void {
 
   stopAllPlayback();
   clearTimer();
+  stopMeters();
 
   const trimSamples = Math.max(
     0,
@@ -679,7 +728,7 @@ function stopWorkletRecording(): void {
     const hadExistingBuffer = buffers[selectedTrackIndex] !== null;
     mergeRecordingIntoBuffer(
       ctx, recordedChunks, trimSamples, selectedTrackIndex,
-      punchInOffset, recordLatencySeconds,
+      punchInOffset,
     );
     if (!hadExistingBuffer) {
       trimStart[selectedTrackIndex] = recordLatencySeconds;
@@ -718,6 +767,7 @@ pauseBtn.addEventListener("click", () => {
     stopAllPlaybackSources(activePlaybackSources);
   }
   clearPlaybackTick();
+  stopMeters();
   setTime(Math.floor(playbackOffset));
   playBtn.disabled = false;
   pauseBtn.disabled = true;
