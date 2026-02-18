@@ -1,122 +1,18 @@
-import type { AudioEngineConfig, PlayState, TrimFxConfig, ProjectMetadata } from './types.js';
+// The audio engine: owns reactive state, the Web Audio context,
+// and the transport state machine (play/pause/stop/record).
+// Delegates DSP, metering, and I/O to focused submodules.
 
-const PLAYBACK_TICK_MS = 50;
-
-const DEFAULT_CONFIG: AudioEngineConfig = {
-  sampleRate: 48000,
-  bitDepth: 16,
-  maxSeconds: 180,
-  trackCount: 4,
-  workletUrl: 'recorder-worklet.js',
-  inputFx: [
-    {
-      type: 'trim',
-      enabled: true,
-      default: -1,
-      gainMin: 0.2,
-      gainRange: 1,
-      curveBase: 0.8,
-      curveRange: 8,
-    },
-  ],
-};
-
-const AUDIO_CONSTRAINTS: MediaTrackConstraints = {
-  echoCancellation: false,
-  noiseSuppression: false,
-  autoGainControl: false,
-  latency: { ideal: 0 },
-} as MediaTrackConstraints;
-
-// ─── Track ────────────────────────────────────────────────────────────────────
-
-export class Track {
-  volume = $state(0.5);
-  pan = $state(0);
-  level = $state(0);
-  hasContent = $state(false);
-
-  buffer: AudioBuffer | null = null;
-  trimStart = 0;
-  gainNode: GainNode | null = null;
-  panNode: StereoPannerNode | null = null;
-  analyserNode: AnalyserNode | null = null;
-}
-
-// ─── Pure helpers ─────────────────────────────────────────────────────────────
-
-function makeSaturationCurve(intensity: number, curveBase: number, curveRange: number): Float32Array<ArrayBuffer> {
-  const n = 8192;
-  const curve = new Float32Array(new ArrayBuffer(n * 4));
-  const k = curveBase + intensity * curveRange;
-  for (let i = 0; i < n; i++) {
-    const x = (i / (n - 1)) * 2 - 1;
-    curve[i] = x + (Math.tanh(k * x) - x) * intensity;
-  }
-  return curve;
-}
-
-function quantizePCM(float32: Float32Array, bitDepth: number): ArrayBuffer {
-  if (bitDepth === 32) {
-    const out = new Float32Array(float32.length);
-    out.set(float32);
-    return out.buffer as ArrayBuffer;
-  }
-  if (bitDepth === 16) {
-    const out = new Int16Array(float32.length);
-    for (let i = 0; i < float32.length; i++) {
-      const s = Math.max(-1, Math.min(1, float32[i]));
-      out[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
-    }
-    return out.buffer;
-  }
-  const out = new Uint8Array(float32.length);
-  for (let i = 0; i < float32.length; i++) {
-    const s = Math.max(-1, Math.min(1, float32[i]));
-    out[i] = Math.round((s + 1) * 0.5 * 255);
-  }
-  return out.buffer;
-}
-
-function dequantizePCM(data: ArrayBuffer, bitDepth: number): Float32Array {
-  if (bitDepth === 32) return new Float32Array(data);
-  if (bitDepth === 16) {
-    const int16 = new Int16Array(data);
-    const out = new Float32Array(int16.length);
-    for (let i = 0; i < int16.length; i++) {
-      out[i] = int16[i] < 0 ? int16[i] / 0x8000 : int16[i] / 0x7fff;
-    }
-    return out;
-  }
-  const uint8 = new Uint8Array(data);
-  const out = new Float32Array(uint8.length);
-  for (let i = 0; i < uint8.length; i++) {
-    out[i] = (uint8[i] / 255) * 2 - 1;
-  }
-  return out;
-}
-
-function measureRecordLatency(stream: MediaStream, ctx: AudioContext): number {
-  let inputLatency = 0;
-  const audioTrack = stream.getAudioTracks()[0];
-  if (audioTrack) {
-    const s = audioTrack.getSettings() as MediaTrackSettings & { latency?: number };
-    if (typeof s.latency === 'number' && s.latency > 0) inputLatency = s.latency;
-  }
-  let outputLatency = 0;
-  if (typeof (ctx as any).outputLatency === 'number') {
-    outputLatency = (ctx as any).outputLatency;
-  } else if (typeof ctx.baseLatency === 'number') {
-    outputLatency = ctx.baseLatency;
-  }
-  const total = inputLatency + outputLatency;
-  return total > 0 ? Math.min(total, 0.2) : 0.03;
-}
-
-// ─── AudioEngine ──────────────────────────────────────────────────────────────
+import type { AudioEngineConfig, PlayState, TrimFxConfig } from '../types.js';
+import { Track } from './track.svelte.js';
+import { DEFAULT_CONFIG, AUDIO_CONSTRAINTS, PLAYBACK_TICK_MS } from './constants.js';
+import { buildInputFxChain, applyTrim } from './input-fx.js';
+import { measureRecordLatency, mergeRecordingIntoBuffer } from './recording.js';
+import { updateMeterLevels, resetMeterLevels } from './metering.js';
+import { exportProject as _exportProject, importProject as _importProject } from './project-io.js';
 
 export class AudioEngine {
-  // --- Reactive state ---
+  // ─── Reactive state (read by UI) ────────────────────────────────────
+
   playState = $state<PlayState>('stopped');
   position = $state(0);
   masterVolume = $state(0.5);
@@ -124,13 +20,13 @@ export class AudioEngine {
   trimValue = $state(-1);
   recordingVolume = $state(0.75);
 
-  // --- Per-track state ---
   tracks: Track[];
 
-  // --- Config ---
+  // ─── Private state ──────────────────────────────────────────────────
+
   private config: AudioEngineConfig;
 
-  // --- Web Audio internals ---
+  // Web Audio graph
   private audioContext: AudioContext | null = null;
   private masterGainNode: GainNode | null = null;
 
@@ -160,7 +56,7 @@ export class AudioEngine {
   // Metering
   private meterRafId: number | null = null;
 
-  // ─── Constructor ──────────────────────────────────────────────────────
+  // ─── Constructor ────────────────────────────────────────────────────
 
   constructor(config: Partial<AudioEngineConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -172,7 +68,7 @@ export class AudioEngine {
     this.tracks = Array.from({ length: this.config.trackCount }, () => new Track());
   }
 
-  // ─── Context / Channel Strips ─────────────────────────────────────────
+  // ─── Context / Channel Strips ───────────────────────────────────────
 
   private ensureContext(): AudioContext {
     if (!this.audioContext) {
@@ -212,131 +108,7 @@ export class AudioEngine {
     }
   }
 
-  // ─── Input FX Chain ───────────────────────────────────────────────────
-
-  private buildInputFxChain(ctx: AudioContext): AudioNode[] {
-    return this.config.inputFx
-      .filter((fx) => fx.enabled)
-      .flatMap((fx) => this.buildFxNodes(ctx, fx));
-  }
-
-  private buildFxNodes(ctx: AudioContext, cfg: TrimFxConfig): AudioNode[] {
-    if (cfg.type === 'trim') {
-      this.trimGainNode = ctx.createGain();
-      this.waveShaperNode = ctx.createWaveShaper();
-      this.waveShaperNode.oversample = '4x';
-      this.applyTrimInternal(this.trimValue);
-      return [this.trimGainNode, this.waveShaperNode];
-    }
-    return [];
-  }
-
-  private applyTrimInternal(sliderValue: number): void {
-    const cfg = this.config.inputFx.find((fx) => fx.type === 'trim');
-    if (!cfg) return;
-    const norm = (sliderValue + 1) / 2;
-    if (this.trimGainNode) {
-      this.trimGainNode.gain.value = cfg.gainMin + norm * cfg.gainRange;
-    }
-    if (this.waveShaperNode) {
-      this.waveShaperNode.curve = makeSaturationCurve(norm, cfg.curveBase, cfg.curveRange);
-    }
-  }
-
-  // ─── Buffer helpers ───────────────────────────────────────────────────
-
-  private buildBufferFromPCM(
-    ctx: AudioContext,
-    chunks: Float32Array[],
-    trimSamples: number,
-    trackIndex: number,
-  ): void {
-    const totalSamples = chunks.reduce((sum, c) => sum + c.length, 0);
-    const length = Math.max(0, totalSamples - trimSamples);
-    if (length === 0) return;
-    const buf = ctx.createBuffer(1, length, ctx.sampleRate);
-    const channel = buf.getChannelData(0);
-    let offset = 0;
-    let skip = trimSamples;
-    for (const c of chunks) {
-      if (skip > 0) {
-        const take = Math.min(c.length, skip);
-        skip -= take;
-        if (skip === 0 && take < c.length) {
-          channel.set(c.subarray(take), offset);
-          offset += c.length - take;
-        }
-      } else {
-        channel.set(c, offset);
-        offset += c.length;
-      }
-    }
-    const track = this.tracks[trackIndex];
-    track.buffer = buf;
-    track.hasContent = true;
-  }
-
-  private mergeRecordingIntoBuffer(
-    ctx: AudioContext,
-    chunks: Float32Array[],
-    trimSamples: number,
-    trackIndex: number,
-    punchInSeconds: number,
-  ): void {
-    const totalRawSamples = chunks.reduce((sum, c) => sum + c.length, 0);
-    const newLength = Math.max(0, totalRawSamples - trimSamples);
-    if (newLength === 0) return;
-
-    const newPCM = new Float32Array(newLength);
-    let writeOffset = 0;
-    let skip = trimSamples;
-    for (const c of chunks) {
-      if (skip > 0) {
-        const take = Math.min(c.length, skip);
-        skip -= take;
-        if (skip === 0 && take < c.length) {
-          newPCM.set(c.subarray(take), writeOffset);
-          writeOffset += c.length - take;
-        }
-      } else {
-        newPCM.set(c, writeOffset);
-        writeOffset += c.length;
-      }
-    }
-
-    const track = this.tracks[trackIndex];
-    const existingBuffer = track.buffer;
-    const existingTrim = track.trimStart;
-    const punchInSample = Math.max(
-      0,
-      Math.round((punchInSeconds + (existingBuffer ? existingTrim : 0)) * ctx.sampleRate),
-    );
-
-    const existingLength = existingBuffer ? existingBuffer.length : 0;
-    const resultLength = Math.max(existingLength, punchInSample + newLength);
-    const resultBuffer = ctx.createBuffer(1, resultLength, ctx.sampleRate);
-    const resultChannel = resultBuffer.getChannelData(0);
-
-    if (existingBuffer) {
-      const existingData = existingBuffer.getChannelData(0);
-      const regionAEnd = Math.min(punchInSample, existingLength);
-      if (regionAEnd > 0) {
-        resultChannel.set(existingData.subarray(0, regionAEnd));
-      }
-      resultChannel.set(newPCM, punchInSample);
-      const regionCStart = punchInSample + newLength;
-      if (regionCStart < existingLength) {
-        resultChannel.set(existingData.subarray(regionCStart), regionCStart);
-      }
-    } else {
-      resultChannel.set(newPCM, punchInSample);
-    }
-
-    track.buffer = resultBuffer;
-    track.hasContent = true;
-  }
-
-  // ─── Playback ─────────────────────────────────────────────────────────
+  // ─── Transport ──────────────────────────────────────────────────────
 
   private getMaxDuration(): number {
     let max = 0;
@@ -433,6 +205,8 @@ export class AudioEngine {
     this.playState = 'stopped';
   }
 
+  // ─── Playback helpers ──────────────────────────────────────────────
+
   private playOtherTracksForMonitoring(excludeIndex: number, offsetSeconds: number = 0): void {
     const ctx = this.ensureContext();
     ctx.resume();
@@ -492,7 +266,7 @@ export class AudioEngine {
     }
   }
 
-  // ─── Recording ────────────────────────────────────────────────────────
+  // ─── Recording ──────────────────────────────────────────────────────
 
   async record(trackIndex: number): Promise<void> {
     if (this.playState === 'recording') return;
@@ -515,14 +289,21 @@ export class AudioEngine {
     const source = ctx.createMediaStreamSource(stream);
     const worklet = new AudioWorkletNode(ctx, 'recorder');
 
-    // Input processing chain: source → inputGain → [fx nodes] → recVol → worklet
+    // Input chain: source → inputGain → [fx nodes] → recVol → worklet → destination
     this.inputGainNode = ctx.createGain();
     this.inputGainNode.gain.value = 1.0;
 
     this.recVolNode = ctx.createGain();
     this.recVolNode.gain.value = this.recordingVolume;
 
-    this.inputFxNodes = this.buildInputFxChain(ctx);
+    const { nodes, trimGainNode, waveShaperNode } = buildInputFxChain(
+      ctx,
+      this.config.inputFx,
+      this.trimValue,
+    );
+    this.inputFxNodes = nodes;
+    this.trimGainNode = trimGainNode;
+    this.waveShaperNode = waveShaperNode;
 
     source.connect(this.inputGainNode);
     let prev: AudioNode = this.inputGainNode;
@@ -599,13 +380,21 @@ export class AudioEngine {
     if (this.recordedChunks.length && ctx) {
       const track = this.tracks[selectedTrackIndex];
       const hadExistingBuffer = track.buffer !== null;
-      this.mergeRecordingIntoBuffer(
+
+      const newBuffer = mergeRecordingIntoBuffer(
         ctx,
         this.recordedChunks,
         trimSamples,
-        selectedTrackIndex,
+        track.buffer,
+        track.trimStart,
         this.punchInOffset,
       );
+
+      if (newBuffer) {
+        track.buffer = newBuffer;
+        track.hasContent = true;
+      }
+
       if (!hadExistingBuffer) {
         track.trimStart = recordLatencySeconds;
       }
@@ -627,7 +416,7 @@ export class AudioEngine {
     this.latencyInfo = `Target <20ms \u2022 Round-trip ~${totalMs} ms (base ${Math.round(baseMs)} ms, out ${Math.round(outMs)} ms)`;
   }
 
-  // ─── Mixer Controls ──────────────────────────────────────────────────
+  // ─── Mixer Controls ─────────────────────────────────────────────────
 
   setTrackVolume(index: number, value: number): void {
     const track = this.tracks[index];
@@ -650,7 +439,8 @@ export class AudioEngine {
 
   setTrim(value: number): void {
     this.trimValue = value;
-    this.applyTrimInternal(value);
+    const cfg = this.config.inputFx.find((fx) => fx.type === 'trim');
+    if (cfg) applyTrim(value, cfg, this.trimGainNode, this.waveShaperNode);
   }
 
   setRecordingVolume(value: number): void {
@@ -662,11 +452,15 @@ export class AudioEngine {
     if (this.inputGainNode) this.inputGainNode.gain.value = value;
   }
 
-  // ─── Metering ─────────────────────────────────────────────────────────
+  // ─── Metering ───────────────────────────────────────────────────────
 
   private startMeters(): void {
     if (this.meterRafId !== null) return;
-    this.meterRafId = requestAnimationFrame(() => this.updateMeters());
+    const tick = () => {
+      updateMeterLevels(this.tracks, this.masterGainNode?.gain.value ?? 1);
+      this.meterRafId = requestAnimationFrame(tick);
+    };
+    this.meterRafId = requestAnimationFrame(tick);
   }
 
   private stopMeters(): void {
@@ -674,113 +468,27 @@ export class AudioEngine {
       cancelAnimationFrame(this.meterRafId);
       this.meterRafId = null;
     }
-    for (const track of this.tracks) {
-      track.level = 0;
-    }
+    resetMeterLevels(this.tracks);
   }
 
-  private updateMeters(): void {
-    const buf = new Float32Array(this.tracks[0]?.analyserNode?.fftSize ?? 256);
-    for (const track of this.tracks) {
-      if (!track.analyserNode) continue;
-      track.analyserNode.getFloatTimeDomainData(buf);
-      let peak = 0;
-      for (let j = 0; j < buf.length; j++) {
-        const abs = Math.abs(buf[j]);
-        if (abs > peak) peak = abs;
-      }
-      const master = this.masterGainNode?.gain.value ?? 1;
-      track.level = Math.min(100, Math.round(peak * master * 100));
-    }
-    this.meterRafId = requestAnimationFrame(() => this.updateMeters());
-  }
-
-  // ─── Save / Load ─────────────────────────────────────────────────────
+  // ─── Save / Load ────────────────────────────────────────────────────
 
   exportProject(): Blob {
-    const trackMeta: { samples: number; volume: number; pan: number; trimStart: number }[] = [];
-    const pcmParts: ArrayBuffer[] = [];
-
-    for (let i = 0; i < this.config.trackCount; i++) {
-      const track = this.tracks[i];
-      if (track.buffer) {
-        const float32 = track.buffer.getChannelData(0);
-        const quantized = quantizePCM(float32, this.config.bitDepth);
-        pcmParts.push(quantized);
-        trackMeta.push({
-          samples: float32.length,
-          volume: track.volume,
-          pan: track.pan,
-          trimStart: track.trimStart,
-        });
-      } else {
-        pcmParts.push(new ArrayBuffer(0));
-        trackMeta.push({
-          samples: 0,
-          volume: track.volume,
-          pan: track.pan,
-          trimStart: track.trimStart,
-        });
-      }
-    }
-
-    const metadata: ProjectMetadata = {
-      sampleRate: this.config.sampleRate,
-      bitDepth: this.config.bitDepth,
-      masterVolume: this.masterVolume,
-      tracks: trackMeta,
-    };
-
-    const encoder = new TextEncoder();
-    const metaBytes = encoder.encode(JSON.stringify(metadata));
-    const metaLength = new Uint32Array([metaBytes.length]);
-
-    return new Blob([metaLength, metaBytes, ...pcmParts], { type: 'application/octet-stream' });
+    return _exportProject(this.tracks, this.config, this.masterVolume);
   }
 
   async importProject(file: File): Promise<void> {
-    const arrayBuffer = await file.arrayBuffer();
-    const view = new DataView(arrayBuffer);
-
-    const metaLength = view.getUint32(0, true);
-    const metaBytes = new Uint8Array(arrayBuffer, 4, metaLength);
-    const metadata: ProjectMetadata = JSON.parse(new TextDecoder().decode(metaBytes));
-
-    const ctx = this.ensureContext();
-    const bytesPerSample = metadata.bitDepth / 8;
-    let offset = 4 + metaLength;
-
-    for (let i = 0; i < metadata.tracks.length && i < this.config.trackCount; i++) {
-      const t = metadata.tracks[i];
-      const track = this.tracks[i];
-
-      if (t.samples > 0) {
-        const byteLen = t.samples * bytesPerSample;
-        const pcmSlice = arrayBuffer.slice(offset, offset + byteLen);
-        offset += byteLen;
-        const float32 = dequantizePCM(pcmSlice, metadata.bitDepth);
-        const audioBuf = ctx.createBuffer(1, float32.length, metadata.sampleRate);
-        audioBuf.getChannelData(0).set(float32);
-        track.buffer = audioBuf;
-        track.hasContent = true;
-      } else {
-        track.buffer = null;
-        track.hasContent = false;
-      }
-
-      track.trimStart = t.trimStart ?? 0;
-      track.volume = t.volume ?? 0.5;
-      track.pan = t.pan ?? 0;
-
-      if (track.gainNode) track.gainNode.gain.value = track.volume;
-      if (track.panNode) track.panNode.pan.value = track.pan;
-    }
-
-    this.setMasterVolume(metadata.masterVolume ?? 0.5);
+    const { masterVolume } = await _importProject(
+      file,
+      this.tracks,
+      this.config,
+      () => this.ensureContext(),
+    );
+    this.setMasterVolume(masterVolume);
     this.rewind();
   }
 
-  // ─── Cleanup ──────────────────────────────────────────────────────────
+  // ─── Cleanup ────────────────────────────────────────────────────────
 
   dispose(): void {
     this.stopAllPlayback();
