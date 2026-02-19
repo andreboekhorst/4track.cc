@@ -2,7 +2,9 @@
 // mixer settings, and the Web Audio nodes for its channel strip.
 
 export class Track {
-  volume = $state(0.5);
+  hidden: boolean;
+
+  volume = $state(1.0);
   pan = $state(0);
   level = $state(0);
   hasContent = $state(false);
@@ -12,4 +14,8 @@ export class Track {
   gainNode: GainNode | null = null;
   panNode: StereoPannerNode | null = null;
   analyserNode: AnalyserNode | null = null;
+
+  constructor(hidden = false) {
+    this.hidden = hidden;
+  }
 }

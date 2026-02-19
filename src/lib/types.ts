@@ -1,3 +1,9 @@
+export interface HiddenTrackConfig {
+  url: string;
+  volume: number;
+  pan?: number;
+}
+
 export interface AudioEngineConfig {
   sampleRate: number;
   bitDepth: number;
@@ -5,6 +11,7 @@ export interface AudioEngineConfig {
   trackCount: number;
   inputFx: TrimFxConfig[];
   workletUrl: string;
+  hiddenTracks?: HiddenTrackConfig[];
 }
 
 export interface TrimFxConfig {
@@ -22,6 +29,7 @@ export interface TrackMeta {
   volume: number;
   pan: number;
   trimStart: number;
+  hidden?: boolean;
 }
 
 export interface ProjectMetadata {

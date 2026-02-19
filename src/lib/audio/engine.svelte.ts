@@ -15,7 +15,7 @@ export class AudioEngine {
 
   playState = $state<PlayState>('stopped');
   position = $state(0);
-  masterVolume = $state(0.5);
+  masterVolume = $state(1.0);
   latencyInfo = $state('');
   trimValue = $state(-1);
   recordingVolume = $state(0.75);
@@ -56,6 +56,9 @@ export class AudioEngine {
   // Metering
   private meterRafId: number | null = null;
 
+  // Initialization guard
+  private audioContextInitialized = false;
+
   // ─── Constructor ────────────────────────────────────────────────────
 
   constructor(config: Partial<AudioEngineConfig> = {}) {
@@ -66,10 +69,18 @@ export class AudioEngine {
     if (trimCfg) this.trimValue = trimCfg.default;
 
     this.tracks = Array.from({ length: this.config.trackCount }, () => new Track());
+
+    for (const ht of this.config.hiddenTracks ?? []) {
+      const track = new Track(true);
+      track.volume = ht.volume;
+      track.pan = ht.pan ?? 0;
+      this.tracks.push(track);
+    }
   }
 
   // ─── Context / Channel Strips ───────────────────────────────────────
 
+  /** Lazily creates the AudioContext and wires up channel strips. Requires a user gesture. */
   private ensureContext(): AudioContext {
     if (!this.audioContext) {
       this.audioContext = new AudioContext({
@@ -81,6 +92,7 @@ export class AudioEngine {
     return this.audioContext;
   }
 
+  /** Creates per-track gain, analyser, and panner nodes routed to the master bus. Runs once. */
   private ensureChannelStrips(): void {
     if (this.tracks[0]?.gainNode) return;
     const ctx = this.audioContext!;
@@ -89,7 +101,7 @@ export class AudioEngine {
     this.masterGainNode.gain.value = this.masterVolume;
     this.masterGainNode.connect(ctx.destination);
 
-    for (let i = 0; i < this.config.trackCount; i++) {
+    for (let i = 0; i < this.tracks.length; i++) {
       const track = this.tracks[i];
       const gain = ctx.createGain();
       gain.gain.value = track.volume;
@@ -108,8 +120,30 @@ export class AudioEngine {
     }
   }
 
+  // ─── Audio Context Initialization ─────────────────────────────────
+
+  /** Initializes the AudioContext and fetches hidden track audio (e.g. cassette hiss). Idempotent. */
+  async initAudioContext(): Promise<void> {
+    if (this.audioContextInitialized) return;
+    this.audioContextInitialized = true;
+    const ctx = this.ensureContext();
+    const configs = this.config.hiddenTracks ?? [];
+    const hiddenTracks = this.tracks.filter((t) => t.hidden);
+
+    await Promise.all(
+      configs.map(async (ht, i) => {
+        const response = await fetch(ht.url);
+        const data = await response.arrayBuffer();
+        const audioBuffer = await ctx.decodeAudioData(data);
+        hiddenTracks[i].buffer = audioBuffer;
+        hiddenTracks[i].hasContent = true;
+      }),
+    );
+  }
+
   // ─── Transport ──────────────────────────────────────────────────────
 
+  /** Returns the longest track buffer duration in seconds. */
   private getMaxDuration(): number {
     let max = 0;
     for (const track of this.tracks) {
@@ -121,13 +155,14 @@ export class AudioEngine {
   }
 
   get hasContent(): boolean {
-    return this.getMaxDuration() > 0;
+    return this.tracks.some((t) => t.hasContent);
   }
 
   get duration(): number {
     return this.getMaxDuration();
   }
 
+  /** Jumps the playhead to a position in seconds. Restarts playback if currently playing. */
   seek(seconds: number): void {
     if (this.playState === 'recording') return;
     const max = this.getMaxDuration();
@@ -142,13 +177,16 @@ export class AudioEngine {
     }
   }
 
-  play(): void {
+  /** Starts playback from the current position. No-op if already playing or recording. */
+  async play(): Promise<void> {
     if (this.playState === 'playing' || this.playState === 'recording') return;
+    await this.initAudioContext();
     const maxDuration = this.getMaxDuration();
     if (maxDuration <= 0) return;
     this.startPlayback(this.playbackOffset);
   }
 
+  /** Schedules all track buffers for playback and starts the position tick timer. */
   private startPlayback(offsetSeconds: number): void {
     const ctx = this.ensureContext();
     ctx.resume();
@@ -193,6 +231,7 @@ export class AudioEngine {
     }, PLAYBACK_TICK_MS);
   }
 
+  /** Pauses playback, preserving the current position for resuming. */
   pause(): void {
     if (this.playState !== 'playing') return;
     const ctx = this.audioContext;
@@ -209,6 +248,7 @@ export class AudioEngine {
     this.playState = 'paused';
   }
 
+  /** Stops playback or recording. If recording, finalizes and merges the recorded audio. */
   stop(): void {
     if (this.recorderWorkletNode) {
       this.stopRecording();
@@ -230,6 +270,7 @@ export class AudioEngine {
     this.playState = 'stopped';
   }
 
+  /** Resets the playhead to the beginning and stops all playback. */
   rewind(): void {
     this.stopSources(this.activePlaybackSources);
     this.playbackStartTime = 0;
@@ -242,6 +283,7 @@ export class AudioEngine {
 
   // ─── Playback helpers ──────────────────────────────────────────────
 
+  /** Plays all tracks except the one being recorded, so the musician can hear the mix. */
   private playOtherTracksForMonitoring(excludeIndex: number, offsetSeconds: number = 0): void {
     const ctx = this.ensureContext();
     ctx.resume();
@@ -265,6 +307,7 @@ export class AudioEngine {
     }
   }
 
+  /** Stops and clears an array of active AudioBufferSourceNodes. */
   private stopSources(sources: AudioBufferSourceNode[]): void {
     const ctx = this.audioContext;
     if (!ctx) return;
@@ -279,12 +322,13 @@ export class AudioEngine {
     sources.length = 0;
   }
 
+  /** Stops both active playback and monitoring sources, resets playback position. */
   private stopAllPlayback(): void {
     this.stopSources(this.activePlaybackSources);
     this.stopSources(this.monitoringSources);
     this.clearPlaybackTick();
-    this.playbackStartTime = 0;
-    this.playbackOffset = 0;
+    // this.playbackStartTime = 0;
+    // this.playbackOffset = 0;
   }
 
   private clearPlaybackTick(): void {
@@ -303,9 +347,12 @@ export class AudioEngine {
 
   // ─── Recording ──────────────────────────────────────────────────────
 
+  /** Arms and starts recording on the given track. Sets up mic input, FX chain, and monitoring. */
   async record(trackIndex: number): Promise<void> {
     if (this.playState === 'recording') return;
-    if (trackIndex < 0 || trackIndex >= this.config.trackCount) return;
+    if (trackIndex < 0 || trackIndex >= this.tracks.length) return;
+    if (this.tracks[trackIndex].hidden) return;
+    await this.initAudioContext();
 
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: {
@@ -369,7 +416,7 @@ export class AudioEngine {
 
     this.timerId = window.setInterval(() => {
       const next = this.position + 1;
-      if (next >= this.config.maxSeconds) {
+      if (next >= this.getMaxDuration()) {
         this.stop();
         return;
       }
@@ -377,6 +424,7 @@ export class AudioEngine {
     }, 1000);
   }
 
+  /** Tears down the recording chain, merges captured audio into the track buffer with latency compensation. */
   private stopRecording(): void {
     const selectedTrackIndex = this.recordingTrackIndex ?? 0;
     const recordLatencySeconds = this.recordingLatencySeconds;
@@ -387,6 +435,15 @@ export class AudioEngine {
     const source = this.recorderSourceNode;
     this.recorderWorkletNode = null;
     this.recorderSourceNode = null;
+
+    // Stop all tracks from playing
+    if (ctx && this.activePlaybackSources.length > 0) {
+      this.stopSources(this.activePlaybackSources);
+    }
+
+    // Store the playbackposition - so it can resume at this time later. 
+    // TODO: at the moment it doesnt have granularity we need (1s) but we are doing that later
+    this.playbackOffset = this.position;
 
     // Tear down input processing chain
     this.inputGainNode?.disconnect();
@@ -440,6 +497,7 @@ export class AudioEngine {
     this.playState = 'stopped';
   }
 
+  /** Updates the latencyInfo reactive state with a human-readable breakdown. */
   private updateLatencyDisplay(recordLatencySeconds: number): void {
     const ctx = this.audioContext;
     const baseMs = ctx && typeof ctx.baseLatency === 'number' ? ctx.baseLatency * 1000 : 0;
@@ -508,15 +566,16 @@ export class AudioEngine {
 
   // ─── Save / Load ────────────────────────────────────────────────────
 
+  /** Serializes all tracks and settings into a .4trk binary blob. */
   exportProject(): Blob {
     return _exportProject(this.tracks, this.config, this.masterVolume);
   }
 
+  /** Loads a .4trk file, restoring all track buffers, mixer settings, and master volume. */
   async importProject(file: File): Promise<void> {
     const { masterVolume } = await _importProject(
       file,
       this.tracks,
-      this.config,
       () => this.ensureContext(),
     );
     this.setMasterVolume(masterVolume);
@@ -525,6 +584,7 @@ export class AudioEngine {
 
   // ─── Cleanup ────────────────────────────────────────────────────────
 
+  /** Disconnects all audio nodes, closes the AudioContext, and releases media streams. */
   dispose(): void {
     this.stopAllPlayback();
     this.clearTimer();

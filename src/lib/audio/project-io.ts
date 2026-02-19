@@ -2,8 +2,8 @@
 // [4 bytes meta length][JSON metadata][PCM track data...]
 // Uses integer quantization from ./pcm.ts for compact storage.
 
-import type { Track } from './track.svelte.js';
-import type { AudioEngineConfig, ProjectMetadata } from '../types.js';
+import { Track } from './track.svelte.js';
+import type { AudioEngineConfig, ProjectMetadata, TrackMeta } from '../types.js';
 import { quantizePCM, dequantizePCM } from './pcm.js';
 
 export function exportProject(
@@ -11,11 +11,10 @@ export function exportProject(
   config: AudioEngineConfig,
   masterVolume: number,
 ): Blob {
-  const trackMeta: { samples: number; volume: number; pan: number; trimStart: number }[] = [];
+  const trackMeta: TrackMeta[] = [];
   const pcmParts: ArrayBuffer[] = [];
 
-  for (let i = 0; i < config.trackCount; i++) {
-    const track = tracks[i];
+  for (const track of tracks) {
     if (track.buffer) {
       const float32 = track.buffer.getChannelData(0);
       const quantized = quantizePCM(float32, config.bitDepth);
@@ -25,6 +24,7 @@ export function exportProject(
         volume: track.volume,
         pan: track.pan,
         trimStart: track.trimStart,
+        hidden: track.hidden || undefined,
       });
     } else {
       pcmParts.push(new ArrayBuffer(0));
@@ -33,6 +33,7 @@ export function exportProject(
         volume: track.volume,
         pan: track.pan,
         trimStart: track.trimStart,
+        hidden: track.hidden || undefined,
       });
     }
   }
@@ -55,7 +56,6 @@ export function exportProject(
 export async function importProject(
   file: File,
   tracks: Track[],
-  config: AudioEngineConfig,
   ensureContext: () => AudioContext,
 ): Promise<{ masterVolume: number }> {
   const arrayBuffer = await file.arrayBuffer();
@@ -69,9 +69,16 @@ export async function importProject(
   const bytesPerSample = metadata.bitDepth / 8;
   let offset = 4 + metaLength;
 
-  for (let i = 0; i < metadata.tracks.length && i < config.trackCount; i++) {
+  for (let i = 0; i < metadata.tracks.length; i++) {
     const t = metadata.tracks[i];
+
+    // Grow the tracks array if the file has more tracks than the engine
+    while (i >= tracks.length) {
+      tracks.push(new Track(t.hidden ?? false));
+    }
+
     const track = tracks[i];
+    track.hidden = t.hidden ?? false;
 
     if (t.samples > 0) {
       const byteLen = t.samples * bytesPerSample;
@@ -88,12 +95,12 @@ export async function importProject(
     }
 
     track.trimStart = t.trimStart ?? 0;
-    track.volume = t.volume ?? 0.5;
+    track.volume = t.volume ?? 1.0;
     track.pan = t.pan ?? 0;
 
     if (track.gainNode) track.gainNode.gain.value = track.volume;
     if (track.panNode) track.panNode.pan.value = track.pan;
   }
 
-  return { masterVolume: metadata.masterVolume ?? 0.5 };
+  return { masterVolume: metadata.masterVolume ?? 1.0 };
 }

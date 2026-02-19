@@ -5,20 +5,20 @@ import type { AudioEngineConfig } from '../types.js';
 export const PLAYBACK_TICK_MS = 50;
 
 export const DEFAULT_CONFIG: AudioEngineConfig = {
-  sampleRate: 48000,
-  bitDepth: 16,
-  maxSeconds: 180,
-  trackCount: 4,
+  sampleRate: 48000, // 44100 | 48000 | 96000
+  bitDepth: 16, // 8 = lo-fi, 16 = CD quality, 32 = float (uncompressed)
+  maxSeconds: 180, // max recording length per track (seconds)
+  trackCount: 4, // number of mixer tracks
   workletUrl: 'recorder-worklet.js',
   inputFx: [
     {
       type: 'trim',
       enabled: true,
-      default: -1,
-      gainMin: 0.2,
-      gainRange: 1,
-      curveBase: 0.8,
-      curveRange: 8,
+      default: -1, // initial slider position: -1 (clean) → 1 (full saturation)
+      gainMin: 0.2, // gain at slider -1; lower = quieter clean tone (0.1–1.0)
+      gainRange: 1, // extra gain added at slider +1; higher = louder boost (0.5–3.0)
+      curveBase: 0.8, // waveshaper base curvature; lower = softer onset (0.1–2.0)
+      curveRange: 8, // extra curvature at full trim; higher = more aggressive distortion (2–20)
     },
   ],
 };
