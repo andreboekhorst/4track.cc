@@ -47,27 +47,37 @@
 
 {#if engine}
 	<div class="app">
-		<Transport {engine} {selectedTrack} />
-		<InputControls {engine} bind:selectedTrack />
-		<Mixer {engine} />
+		<div class="section"><Mixer {engine} /></div>
+		<div class="section"><InputControls {engine} bind:selectedTrack /></div>
+		<div class="section"><Transport {engine} {selectedTrack} /></div>
+	</div>
 
-		<div class="file-controls">
-			<button onclick={handleSave} disabled={!engine.hasContent}>Save</button>
-			<button onclick={handleLoad}>Load</button>
-			<input
-				type="file"
-				accept=".4trk"
-				bind:this={fileInput}
-				onchange={handleFileChange}
-				hidden
-			/>
-		</div>
+			
+	<div class="file-controls">
+		<button onclick={handleSave} disabled={!engine.hasContent}>Save</button>
+		<button onclick={handleLoad}>Load</button>
+		<input
+			type="file"
+			accept=".4trk"
+			bind:this={fileInput}
+			onchange={handleFileChange}
+			hidden
+		/>
 	</div>
 {/if}
 
 <style>
 	.app {
-		text-align: center;
+		/* text-align: center; */
+		background: rgb(63, 63, 63);
+		/* padding: 10px; */
+		border-radius: 20px;
+		display: flex;
+	}
+	
+	.section{
+		flex-direction: column;
+		
 	}
 
 	.file-controls {
