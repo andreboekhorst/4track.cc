@@ -19,6 +19,8 @@
   })
 
   let isPaused = $state(false)
+  let btnActive = $state(false)
+  let btnActive1 = $state(false)
 
   let timer: ReturnType<typeof setInterval> | undefined
 
@@ -113,14 +115,88 @@
       disabled={engine.playState === "recording" || !engine.hasContent}
     />
   </div>
-  <div class="controls">
+  <!-- <div class="controls">
     {#each Object.entries(btns) as [type, btn]}
       <Button {type} pressed={btn.pressed} onClick={() => clicky(type)} />
     {/each}
+  </div> -->
+
+  <div class="btnLabels">
+    {#each Object.entries(btns) as [type, btn]}
+      <div class="btnLabel ui-label">{type}</div>
+    {/each}
+  </div>
+  <div class="controlBtns">
+    <div class="imgBtns">
+      {#each Object.entries(btns) as [type, btn]}
+        <!-- <Button {type} pressed={btn.pressed} onClick={() => clicky(type)} /> -->
+        <button
+          type="button"
+          class="btn"
+          class:active={btn.pressed}
+          onmousedown={() => clicky(type)}
+        >
+          &nbsp;
+        </button>
+      {/each}
+    </div>
+    <div class="after">&nbsp;</div>
   </div>
 </div>
 
 <style>
+  .controlBtns {
+    /*  */
+    background: linear-gradient(to bottom right, #3d3c43, #646468);
+    width: 440px;
+    height: 120px;
+    border-radius: 4px;
+    box-shadow:
+      inset 2px 2px 6px rgba(0, 0, 0, 0.6),
+      inset -1px -1px 2px rgba(255, 255, 255, 0.5);
+    display: flex;
+    flex-direction: column;
+    padding-top: 1px;
+    padding-right: 2px;
+  }
+  .imgBtns {
+    padding: 3px;
+    border-radius: 2px;
+    background-color: #212121;
+  }
+  .btnLabels {
+    display: flex;
+    width: 436px;
+    div {
+      flex: 1;
+      text-align: center;
+      padding-bottom: 6px;
+    }
+  }
+  .btn {
+    appearance: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    background-color: transparent;
+    background-image: url("/btn_normal.png");
+    background-size: cover;
+    background-position: center;
+    width: 70px;
+    height: 87px;
+    margin-right: 2px;
+    box-shadow: 15px 15px 22px rgba(0, 0, 0, 0.6);
+  }
+  .btn.active,
+  .btn:active {
+    background-image: url("/btn_pressed.png");
+    box-shadow:
+      inset 5px 0px 15px rgba(0, 0, 0, 0.4),
+      10px 10px 20px rgba(0, 0, 0, 0.6);
+  }
+  .btn.active + .btn.active {
+    box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.6);
+  }
   .top {
     height: 22cqh;
   }
@@ -128,11 +204,11 @@
   .transport {
     display: flex;
     flex-direction: column;
-    flex: 1;
+    /* flex: 1; */
     height: 100%;
-    div {
-      flex: 1;
-    }
+    /* div {
+      flex: 1; */
+    /* } */
   }
 
   .time {

@@ -60,13 +60,13 @@
   }
 
   // Ensures that the button goes from 8-4o'clock
-  // The actual buttons go a bit further than the liness
+  // Deliberately a bit extended at start and end.
   function mapToKnob(val: number) {
-    return val * 0.8 - 0.4
+    return val * 0.73 - 0.37
   }
 </script>
 
-<div>
+<div class="knobx">
   <div
     class="knobcontainer"
     bind:this={containerEl}
@@ -74,47 +74,168 @@
     onpointerup={stopRotate}
     onpointerleave={stopRotate}
   >
-    <div
-      class="knob"
-      onpointerdown={startRotate}
-      class:dragging={rotating}
-      style="rotate: {mapToKnob(normalizeValue(value))}turn"
-    >
-      <div class="line">&nbsp;</div>
+    <div class="knob" onpointerdown={startRotate} class:dragging={rotating}>
+      <div class="layer1">
+        <div class="layer2">
+          <div class="layer3">
+            <div
+              class="layer4"
+              style="rotate: {mapToKnob(normalizeValue(value))}turn"
+            >
+              <div class="layer5">
+                <div class="line1"></div>
+                <div class="line2"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="labels">
-      <span>{labelLeft}</span>
-      <span>{labelRight}</span>
-    </div>
+  </div>
+  <div class="labels">
+    <span class="ui-label">&nbsp;{labelLeft}</span>
+    <span class="ui-label">&nbsp;{labelRight}</span>
   </div>
 </div>
 
 <style>
+  .knobx {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    user-select: none;
+  }
   .knobcontainer {
-    width: 6.9cqw;
+    width: 5.75cqw;
     aspect-ratio: 1 / 1;
     display: flex;
     user-select: none;
-    /* background-color: pink; */
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    position: relative;
+    margin-bottom: -0.5cqw;
+
+    &:before {
+      content: " ";
+      position: absolute;
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: conic-gradient(
+        from 0deg at 50% 50%,
+        /* 12 o'clock (0°) */ rgba(255, 255, 255, 0.5) 0deg 1deg,
+        transparent 1deg 29deg,
+        /* 13:00 (30°) */ rgba(255, 255, 255, 0.5) 29deg 31deg,
+        transparent 31deg 59deg,
+        /* 14:00 (60°) */ rgba(255, 255, 255, 0.5) 59deg 61deg,
+        transparent 61deg 89deg,
+        /* 15:00 (90°) */ rgba(255, 255, 255, 0.5) 89deg 91deg,
+        transparent 91deg 119deg,
+        /* 16:00 (120°) */ rgba(255, 255, 255, 0.5) 119deg 121deg,
+        transparent 121deg 239deg,
+        /* 8:00 (240°) */ rgba(255, 255, 255, 0.5) 239deg 241deg,
+        transparent 241deg 269deg,
+        /* 9:00 (270°) */ rgba(255, 255, 255, 0.5) 269deg 271deg,
+        transparent 271deg 299deg,
+        /* 10:00 (300°) */ rgba(255, 255, 255, 0.5) 299deg 301deg,
+        transparent 301deg 329deg,
+        /* 11:00 (330°) */ rgba(255, 255, 255, 0.5) 329deg 331deg,
+        transparent 331deg 359deg,
+        /* 12 o'clock wrap */ rgba(255, 255, 255, 0.5) 359deg 360deg
+      );
+    }
   }
   .knob {
-    width: 5cqw;
+    width: 4.2cqw;
     aspect-ratio: 1 / 1;
     border-radius: 100%;
-    background-color: rgb(111, 111, 111);
+    background-color: rgb(32, 32, 32);
     /* rotate: 0.4turn; */
     cursor: grab;
+    /* outline: 0.25cqw solid rgb(32, 32, 32); */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+
+    .layer1 {
+      position: absolute;
+      display: block;
+      width: 90%;
+      height: 90%;
+      border-radius: 100%;
+      background: linear-gradient(to right, #a9a9a9, #5c5c5c);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .layer2 {
+      display: block;
+      width: 85%;
+      height: 85%;
+      border-radius: 100%;
+      /* background: linear-gradient(to bottom right, #bfbfbf, #4a4a4a); */
+      background: linear-gradient(to bottom right, #8e8e8e 35%, #4a4a4a 65%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      box-shadow: 20px 15px 16px rgba(0, 0, 0, 0.4);
+      /* 20px 15px 16px rgba(0, 0, 0, 0.3); */
+    }
+
+    .layer3 {
+      border-radius: 100%;
+      display: block;
+      width: 80%;
+      height: 80%;
+      background-color: #979797;
+      box-shadow:
+        inset 2px 2px 2px rgba(255, 255, 255, 0.5),
+        inset -1px -1px 2px rgba(50, 50, 50, 0.7);
+    }
+    .layer4 {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      mix-blend-mode: overlay;
+
+      .line1 {
+        position: absolute;
+        background-color: #f5c68b;
+        width: 4px;
+        height: 10px;
+        left: calc(50% - 2px);
+        border-radius: 3px;
+      }
+      .line2 {
+        position: absolute;
+        background-color: #f5c68b;
+        width: 4px;
+        height: 4px;
+        left: calc(50% - 2px);
+        top: -8px;
+        border-radius: 1px;
+      }
+    }
+    .layer5 {
+      /* mix-blend-mode: screen; */
+    }
   }
   .knob.dragging {
     cursor: grabbing;
   }
-  .line {
-    background-color: red;
-    width: 2px;
-    height: 20px;
-    margin-left: 50%;
+
+  .labels {
+    display: flex;
+    width: 100%;
+    span {
+      flex: 1;
+      text-align: center;
+    }
   }
 </style>

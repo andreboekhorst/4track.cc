@@ -6,19 +6,9 @@
   let mVolume = $state(0)
 </script>
 
-<div class="master">
-  <span class="ui-label">Phones</span>
-  <!-- <label class="master-label"> -->
-  <!-- <input
-      type="range"
-      min="0"
-      max="1.5"
-      step="0.01"
-      value={engine.masterVolume}
-      oninput={(e) => engine.setMasterVolume(Number(e.currentTarget.value))}
-    />
-    O{Math.floor(engine.masterVolume * 100)}O -->
-  <div class="top">
+<div class="row master">
+  <span class="col1 ui-label">Phones</span>
+  <div class="col2 phonos-button">
     <Knob
       min={0}
       max={1.5}
@@ -26,101 +16,108 @@
       onchange={(vol) => engine.setMasterVolume(vol)}
     />
   </div>
-  <!-- </label> -->
 </div>
 
-<div class="mixer">
-  {#each engine.tracks as track, i}
-    {#if !track.hidden}
-      <div class="channel-strip">
-        <!-- <span class="channel-label">Track {i + 1}</span> -->
-        <div class="knob-holder">
-          <!-- <input
-						type="range"
-						min="0"
-						max="1.5"
-						step="0.01"
-						value={track.volume}
-						oninput={(e) => engine.setTrackVolume(i, Number(e.currentTarget.value))}
-					/> -->
-          <Knob
-            min={0}
-            max={1.5}
-            bind:value={track.volume}
-            onchange={(vol) => engine.setTrackVolume(i, vol)}
-          />
+{#each engine.tracks as track, i}
+  {#if !track.hidden}
+    <div class="row channel-strip">
+      <div class="col1 channel-lights">
+        <div class="bg">
+          <div class="light high" class:active={track.level > 3}>&nbsp;</div>
+          <div class="light low" class:active={track.level > 0.5}>&nbsp;</div>
         </div>
-        <div class="knob-holder">
-          <!-- <input
-					type="range"
-					min="-1"
-					max="1"
-					step="0.01"
-					value={track.pan}
-					oninput={(e) => engine.setTrackPan(i, Number(e.currentTarget.value))}
-					/> -->
-          <Knob
-            min={-1}
-            max={1}
-            bind:value={track.pan}
-            onchange={(pan) => engine.setTrackPan(i, pan)}
-            labelLeft="L"
-            labelRight="R"
-          />
-        </div>
-        <!-- <span class="channel-level">{track.level}</span> -->
       </div>
-    {/if}
-  {/each}
+      <div class="col2 channel-knob">
+        <Knob
+          min={0}
+          max={1.5}
+          bind:value={track.volume}
+          onchange={(vol) => engine.setTrackVolume(i, vol)}
+        />
+      </div>
+      <div class="col3 channel-knob">
+        <Knob
+          min={-1}
+          max={1}
+          bind:value={track.pan}
+          onchange={(pan) => engine.setTrackPan(i, pan)}
+          labelLeft="L"
+          labelRight="R"
+        />
+      </div>
+    </div>
+  {/if}
+{/each}
+
+<div class="row labels">
+  <span class="col1"></span>
+  <span class="col2 ui-label">Level</span>
+  <span class="col3 ui-label">Pan</span>
+  <span class="col4 ui-label">Master</span>
 </div>
 
 <style>
-  .channel-strip {
+  .row {
     display: flex;
-    /* flex-direction: column; */
-    align-items: center;
-    /* gap: 20px; */
-    /* padding: 30px; */
   }
-
-  .knob-holder {
-    /* width: 5cqw; */
-    /* aspect-ratio: 1 / 1; */
+  .col1 {
+    width: 4.5cqw;
+    margin-left: 4.5cqw;
   }
-
+  .col2 {
+    width: 7.5cqw;
+    justify-content: center;
+  }
+  .col3 {
+    width: 7.5cqw;
+    justify-content: center;
+  }
+  .col4 {
+  }
   .master {
-    height: 10vw;
+    height: 14cqw;
+    padding-top: 5cqw;
     aspect-ratio: 1 / 1;
   }
+  .channel-strip {
+    /* align-items: center; */
+    height: 10cqw;
+  }
 
-  .master-label {
-    display: flex;
+  .channel-knob {
+    /* width: 7cqw; */
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    font-size: 0.75rem;
-    color: #aaa;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
   }
 
-  .master-label input[type="range"] {
-    width: 120px;
-    accent-color: #6cf;
+  .bg {
+    background: rgba(46, 46, 46, 0.5);
+    width: 20px;
+    height: 40px;
+    transform: rotate(-50deg);
+    border-radius: 20px;
+    outline: 1px solid rgb(36, 36, 36);
+    padding: 2px;
   }
 
-  .master {
-    padding-left: 6.25cqw;
+  .light {
+    border-radius: 50%;
+    /* margin: 40%; */
+    width: 1cqw;
+    height: 1cqw;
+    aspect-ratio: 1 / 1;
+    opacity: 0.4;
+    &.low {
+      background-color: rgb(166, 255, 0);
+    }
+    &.high {
+      background-color: red;
+    }
+    &.active {
+      opacity: 1;
+    }
   }
-
-  .mixer {
-    padding-left: 6.25cqw;
-  }
-
-  .top {
-    /* width: 5cqw; */
-    height: 22cqh;
-    /* aspect-ratio: 1 / 1; */
+  .ui-label {
+    text-align: center;
   }
 </style>

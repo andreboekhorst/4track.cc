@@ -9,53 +9,30 @@
   }: { engine: AudioEngine; selectedTrack: number } = $props()
 </script>
 
-<div class="line-in">x</div>
-<div class="trim-knob">
-  <Knob
-    min={-1}
-    max={1}
-    bind:value={engine.trimValue}
-    onchange={(trim) => engine.setTrim(trim)}
-    leftLabel="LINE"
-    rightLabel="MIC"
-  />
-</div>
-<div class="sliders">
-  <div>
-    <SlideSelect bind:value={selectedTrack} />
+<div class="srtrip">
+  <div class="row line-in">&nbsp;</div>
+  <div class="row trim-knob">
+    <Knob
+      min={-1}
+      max={1}
+      bind:value={engine.trimValue}
+      onchange={(trim) => engine.setTrim(trim)}
+      labelLeft="LINE"
+      labelRight="MIC"
+    />
   </div>
-  <div>
-    <Slider />
+  <div class="row sliders">
+    <div class="slideSelect">
+      <SlideSelect bind:value={selectedTrack} />
+    </div>
+    <div>
+      <Slider />
+    </div>
+  </div>
+  <div class="row label">
+    <span class="ui-label">Input</span>
   </div>
 </div>
-
-<!-- <label class="trim-label">
-  Trim
-  <span class="trim-range">LINE</span>
-  <input
-    type="range"
-    min="-1"
-    max="1"
-    step="0.01"
-    value={engine.trimValue}
-    oninput={(e) => engine.setTrim(Number(e.currentTarget.value))}
-  />
-  <span class="trim-range">MIC</span>
-</label>
-
-<label class="trim-label">
-  Volume
-  <input
-    type="range"
-    min="0"
-    max="1"
-    step="0.01"
-    value={engine.recordingVolume}
-    oninput={(e) => engine.setRecordingVolume(Number(e.currentTarget.value))}
-  />
-</label>
-
-<div class="latency">{engine.latencyInfo}</div> -->
 
 <style>
   .line-in {
@@ -79,54 +56,29 @@
     cursor: pointer;
   }
 
-  .track-select:hover,
-  .track-select:focus {
-    background: #444;
-    outline: none;
-  }
-
-  .trim-label {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-    margin-bottom: 1rem;
-    font-size: 0.75rem;
-    color: #aaa;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .trim-knob {
-    height: 40px;
-    aspect-ratio: 1 / 1;
-  }
-
-  .trim-label input[type="range"] {
-    width: 100px;
-    accent-color: #f90;
-  }
-
-  .trim-range {
-    font-size: 0.6rem;
-    color: #666;
-    min-width: 2em;
-    text-align: center;
-  }
-
-  .latency {
-    font-size: 0.75rem;
-    color: #888;
-    margin-bottom: 0.5rem;
-    min-height: 1.25rem;
-  }
-
   .sliders {
     display: flex;
+    height: 30cqw;
 
     div {
       width: 50%;
+      justify-content: center;
+      align-items: center;
+      display: flex;
     }
+  }
+
+  .row {
+  }
+  .trim-knob {
+    height: 10cqw;
+  }
+
+  .slideSelect {
+    /* height: 200px; */
+    padding-top: 50%;
+  }
+  .label {
+    text-align: center;
   }
 </style>

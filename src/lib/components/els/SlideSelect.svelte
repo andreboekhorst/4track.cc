@@ -8,13 +8,13 @@
   let staggeredx = $state()
   let selected_i = $state(0)
   let selections = [
-    { lbl: "TRK 1", val: "0" },
-    { lbl: "2", val: "1" },
-    { lbl: "3", val: "2" },
-    { lbl: "4", val: "3" },
+    { lbl: "TRK 1", val: 0 },
+    { lbl: "2", val: 1 },
+    { lbl: "3", val: 2 },
+    { lbl: "4", val: 3 },
     // { lbl: "SAFE", val: "0" },
   ]
-  let btnHeight = $state(0.33)
+  let btnHeight = $state(0.55)
 
   let { value = $bindable() } = $props()
 
@@ -65,12 +65,10 @@
   ></div>
 </div>
 
-<p>{value}</p>
-
 <style>
   .track {
     width: 10px;
-    height: 300px;
+    height: 100%;
     background: #272727;
     position: relative;
     border-radius: 5px;

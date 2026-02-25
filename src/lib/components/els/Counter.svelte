@@ -5,6 +5,15 @@
   }
 </script>
 
-<button onclick={increment}>
-  count is {count}
-</button>
+<div class="counter">
+  xx
+  <button onclick={increment}>
+    count is {count}
+  </button>
+</div>
+
+<style>
+  .counter {
+    background-image: url("/btn_normal.png");
+  }
+</style>

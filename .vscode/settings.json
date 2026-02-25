@@ -5,5 +5,8 @@
   "editor.insertSpaces": true,
   "gitlens.codeLens.enabled": false,
   "gitlens.currentLine.enabled": false,
-  "editor.codeLens": false
+  "editor.codeLens": false,
+  "workbench.editorAssociations": {
+    "*.svg": "default"
+  }
 }
