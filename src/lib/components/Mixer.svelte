@@ -20,32 +20,37 @@
   </div>
 </div>
 
+{#snippet channelStrip(track, i)}
+  <div class="row channel-strip">
+    <div class="col1 channel-lights">
+      <Lights level={track.level} />
+    </div>
+    <div class="col2 channel-knob">
+      <Knob
+        min={0}
+        max={1.5}
+        bind:value={track.volume}
+        onchange={(vol) => engine.setTrackVolume(i, vol)}
+      />
+    </div>
+    <div class="col3 channel-knob">
+      <Knob
+        min={-1}
+        max={1}
+        bind:value={track.pan}
+        onchange={(pan) => engine.setTrackPan(i, pan)}
+        labelLeft="L"
+        labelRight="R"
+        color="pink"
+      />
+    </div>
+  </div>
+{/snippet}
+
+<!-- Not sure if sunippets are most useful here, but wanted to ttry them -->
 {#each engine.tracks as track, i}
   {#if !track.hidden}
-    <div class="row channel-strip">
-      <div class="col1 channel-lights">
-        <Lights level={track.level} />
-      </div>
-      <div class="col2 channel-knob">
-        <Knob
-          min={0}
-          max={1.5}
-          bind:value={track.volume}
-          onchange={(vol) => engine.setTrackVolume(i, vol)}
-        />
-      </div>
-      <div class="col3 channel-knob">
-        <Knob
-          min={-1}
-          max={1}
-          bind:value={track.pan}
-          onchange={(pan) => engine.setTrackPan(i, pan)}
-          labelLeft="L"
-          labelRight="R"
-          color="pink"
-        />
-      </div>
-    </div>
+    {@render channelStrip(track, i)}
   {/if}
 {/each}
 

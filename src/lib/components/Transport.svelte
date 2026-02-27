@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { AudioEngine } from "$lib"
   import Button from "./els/recorder/Button.svelte"
+  import Cassette from "./Cassette.svelte"
   import Timestamp from "./els/Timestamp.svelte"
   import { onDestroy } from "svelte"
 
@@ -132,19 +133,7 @@
       disabled={engine.playState === "recording" || !engine.hasContent}
     />
   </div>
-  <div class="casette">
-    <div class="casette_1">
-      <div class="casette_2">
-        <div class="inset">
-          <div class="shadow"></div>
-          <div class="rotaters">
-            <div class="rotater rot1" class:paused={speed == 0}></div>
-            <div class="rotater rot2" class:paused={speed == 0}></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <Cassette {speed} />
   <div class="ctrlButtons">
     <div class="btnLabels">
       {#each Object.entries(btns) as [type, btn]}
@@ -296,104 +285,5 @@
     gap: 0.5rem;
     justify-content: center;
     flex-wrap: wrap;
-  }
-  .casette_1 {
-  }
-
-  .casette_2 {
-    background-color: #212124;
-    /* padding: 40px; */
-    border-radius: 4px;
-    /* margin-left: 100px; */
-    width: 85%;
-    margin: 100px auto;
-    padding: 10px 0;
-    position: relative;
-    /* display: flex; */
-    /* align-items: center; */
-
-    &:before {
-      position: absolute;
-      content: " ";
-      display: block;
-      width: 100%;
-      height: 100%;
-      left: 0;
-      top: 0;
-      background: linear-gradient(-45deg, #000000 60%, #ffffff 61%);
-      z-index: 100;
-      opacity: 0.1;
-      mix-blend-mode: screen;
-      border-radius: 5px;
-    }
-  }
-
-  .casette {
-    height: 300px;
-    width: 100%;
-    border: 4px solid #131313;
-    border-radius: 4px;
-    margin-bottom: 10px;
-
-    .inset {
-      background: url("/tape.jpg");
-      background-size: 125%;
-      background-position: -45px -115px;
-      border-radius: 10px;
-      width: 340px;
-      height: 60px;
-      position: relative;
-      margin: 0 auto;
-    }
-
-    .rotaters {
-      display: flex;
-      gap: 50px;
-      overflow: hidden;
-      height: 60px;
-    }
-    .shadow {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      box-shadow:
-        inset 1px 1px 0px 0px rgb(0 0 0),
-        inset 40px 20px 20px rgb(0 0 0 / 95%),
-        inset -5px -10px 10px rgb(0 0 0 / 25%),
-        inset -1px -1px 1px 0px rgba(255, 255, 255, 0.25);
-      border: 1px solid #171718;
-      z-index: 1;
-      border-radius: 5px;
-    }
-
-    .rotater {
-      background-color: red;
-      width: 120px;
-      height: 120px;
-      display: none;
-
-      background: url("/rotator.png");
-      background-size: contain;
-      background-repeat: no-repeat;
-      /* filter: blur(2px); */
-    }
-    .rot1 {
-      animation: spin 4s linear infinite;
-    }
-    .rot2 {
-      animation: spin 12s linear infinite;
-    }
-    .paused {
-      animation-play-state: paused !important;
-    }
-  }
-
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
   }
 </style>
