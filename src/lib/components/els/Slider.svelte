@@ -57,7 +57,7 @@
 <style>
   .track {
     width: 30px;
-    height: 400px;
+    height: 100%;
     position: relative;
     border-radius: 5px;
     box-shadow:
@@ -89,6 +89,8 @@
     left: 0px;
     cursor: grab;
     z-index: 1;
+    border-radius: 7px;
+    box-shadow: 10px 5px 5px rgba(0, 0, 0, 0.4);
   }
   .thumb.dragging {
     cursor: grabbing;

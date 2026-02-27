@@ -21,29 +21,29 @@
 </div>
 
 {#snippet channelStrip(track, i)}
-  <div class="row channel-strip">
-    <div class="col1 channel-lights">
-      <Lights level={track.level} />
-    </div>
-    <div class="col2 channel-knob">
-      <Knob
-        min={0}
-        max={1.5}
-        bind:value={track.volume}
-        onchange={(vol) => engine.setTrackVolume(i, vol)}
-      />
-    </div>
-    <div class="col3 channel-knob">
-      <Knob
-        min={-1}
-        max={1}
-        bind:value={track.pan}
-        onchange={(pan) => engine.setTrackPan(i, pan)}
-        labelLeft="L"
-        labelRight="R"
-        color="pink"
-      />
-    </div>
+  <div class="col1 channel-lights" style="grid-area: {i + 2} / 2 / {i + 3} / 3">
+    <Lights level={track.level} />
+  </div>
+
+  <div class="col2 channel-knob" style="grid-area: {i + 2} / 3 / {i + 3} / 4">
+    <Knob
+      min={0}
+      max={1.5}
+      bind:value={track.volume}
+      onchange={(vol) => engine.setTrackVolume(i, vol)}
+    />
+  </div>
+
+  <div class="col3 channel-knob" style="grid-area: {i + 2} / 4 / {i + 3} / 5">
+    <Knob
+      min={-1}
+      max={1}
+      bind:value={track.pan}
+      onchange={(pan) => engine.setTrackPan(i, pan)}
+      labelLeft="L"
+      labelRight="R"
+      color="pink"
+    />
   </div>
 {/snippet}
 
@@ -54,35 +54,15 @@
   {/if}
 {/each}
 
-<div class="row labels">
-  <span class="col1"></span>
-  <span class="col2 ui-label">Level</span>
-  <span class="col3 ui-label">Pan</span>
-  <span class="col4 ui-label">Master</span>
-</div>
+<div class="ui-label" style="grid-area: 6 / 3 / 7 / 6">Level</div>
+<div class="ui-label" style="grid-area: 6 / 4 / 7 / 7">Pan</div>
 
 <style>
-  .row {
-    display: flex;
-  }
-  .col1 {
-    width: 4.5cqw;
-    margin-left: 4.5cqw;
-  }
-  .col2 {
-    width: 7.5cqw;
-    justify-content: center;
-  }
-  .col3 {
-    width: 7.5cqw;
-    justify-content: center;
-  }
-  .col4 {
-  }
   .master {
     height: 14cqw;
     padding-top: 5cqw;
     aspect-ratio: 1 / 1;
+    grid-area: 1 / 3 / 2 / 4;
   }
   .channel-strip {
     /* align-items: center; */
@@ -121,8 +101,5 @@
     &.active {
       opacity: 1;
     }
-  }
-  .ui-label {
-    text-align: center;
   }
 </style>

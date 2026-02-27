@@ -98,7 +98,7 @@
   }
 
   .casette {
-    height: 300px;
+    height: auto;
     width: calc(100% - 20px);
     border: 3px solid #1c1c1f;
     border-radius: 4px;

@@ -48,13 +48,9 @@
 {#if engine}
   <div class="frame">
     <div class="app">
-      <div class="section mixers"><Mixer {engine} /></div>
-      <div class="divider">&nbsp;</div>
-      <div class="section input">
+      <div class="parent">
+        <Mixer {engine} />
         <InputControls {engine} bind:selectedTrack />
-      </div>
-      <div class="divider">&nbsp;</div>
-      <div class="section transport">
         <Transport {engine} {selectedTrack} />
       </div>
     </div>
@@ -74,6 +70,21 @@
 {/if}
 
 <style>
+  .parent {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    grid-template-rows: repeat(7, 1fr);
+    grid-column-gap: 0px;
+    grid-row-gap: 0px;
+  }
+
+  .div1 {
+    grid-area: 1 / 1 / 2 / 3;
+  }
+  .div2 {
+    grid-area: 3 / 2 / 6 / 3;
+  }
+
   .frame {
     container-type: size; /* Container Query */
     background: linear-gradient(to bottom, #616161, #3b3b3b);

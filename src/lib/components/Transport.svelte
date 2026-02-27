@@ -117,23 +117,11 @@
   }
 </script>
 
-<div class="transport">
-  <div class="top">
-    <Timestamp timestamp={engine.position} />
-  </div>
-  <!-- <div>
-    <input
-      type="range"
-      class="time-slider"
-      min="0"
-      max={engine.duration || 180}
-      step="0.1"
-      value={engine.position}
-      oninput={(e) => engine.seek(Number(e.currentTarget.value))}
-      disabled={engine.playState === "recording" || !engine.hasContent}
-    />
-  </div> -->
+<div style="grid-area: 1 / 8 / 2 / 9">
+  <Timestamp timestamp={engine.position} />
+</div>
 
+<div style="grid-area: 2 / 8 / 5 / 9">
   <Cassette
     {speed}
     time={engine.position}
@@ -141,7 +129,9 @@
     onchange={(ts) => engine.seek(ts)}
     isRecording={engine.playState === "recording"}
   />
+</div>
 
+<div style="grid-area: 5 / 8 / 7 / 9">
   <div class="ctrlButtons">
     <div class="btnLabels">
       {#each Object.entries(btns) as [type, btn]}
@@ -172,7 +162,6 @@
     align-items: center;
   }
   .controlBtns {
-    /*  */
     background: linear-gradient(to bottom right, #3d3c43, #646468);
     width: 440px;
     height: 120px;
@@ -268,11 +257,7 @@
   .transport {
     display: flex;
     flex-direction: column;
-    /* flex: 1; */
     height: 100%;
-    /* div {
-      flex: 1; */
-    /* } */
   }
 
   .time {
