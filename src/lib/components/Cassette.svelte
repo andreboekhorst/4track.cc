@@ -1,15 +1,69 @@
 <script lang="ts">
-  let { speed }: { speed: number } = $props()
+  let { speed, time, max, onchange, isRecording } = $props()
+  let containerEl = $state()
+  let dragging = $state(false)
+  let startPos = $state()
+  let _dragPercentage = $state(0)
+  let xPos = $state()
+
+  // should be disabled whern ffwding...
+
+  function startDrag(e) {
+    dragging = true
+    _dragPercentage = 0
+    xPos = e.clientX
+    startPos = time
+    // needed to keep tracking pointermove, even if it is outside
+    e.target.setPointerCapture(e.pointerId)
+  }
+
+  const drag = (e) => {
+    // trigggered continously
+    if (!dragging) return
+    if (isRecording) return
+    if (speed > 1 || speed < 0) return //disable when ffwd
+
+    const rect = containerEl.getBoundingClientRect()
+    const xMove = e.clientX - xPos // it should be the difference from where it initially started.
+
+    // never drag more than 1, altought we later also need to
+    let _dragPercentage = xMove / rect.width / 4
+
+    let _time = Math.max(0, Math.min(startPos + _dragPercentage * max, max))
+    console.log(startPos, _time)
+
+    // Trigger Callback
+    onchange?.(_time)
+  }
+
+  const stopDrag = (e) => {
+    dragging = false
+    e.target.releasePointerCapture?.(e.pointerId)
+  }
 </script>
 
 <div class="casette">
   <div class="casette_1">
-    <div class="casette_2">
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="casette_2"
+      onpointerdown={startDrag}
+      onpointermove={drag}
+      onpointerup={stopDrag}
+      onpointerleave={stopDrag}
+      bind:this={containerEl}
+    >
       <div class="inset">
         <div class="shadow"></div>
         <div class="rotaters">
-          <div class="rotater rot1" class:paused={speed == 0}></div>
-          <div class="rotater rot2" class:paused={speed == 0}></div>
+          <div
+            class="rotater rot1"
+            style:transform={"rotate(" + (time * 270) / 10 + "deg)"}
+          ></div>
+          <div
+            class="rotater rot2"
+            style:transform={"rotate(" + (time * 180) / 10 + "deg)"}
+          ></div>
         </div>
       </div>
     </div>
@@ -24,6 +78,11 @@
     margin: 100px auto;
     padding: 10px 0;
     position: relative;
+    cursor: ew-resize;
+
+    &:active {
+      cursor: col-resize;
+    }
 
     &:before {
       position: absolute;
@@ -90,23 +149,23 @@
       background-repeat: no-repeat;
       margin-top: -10px;
     }
-    .rot1 {
+    /* .rot1 {
       animation: spin 4s linear infinite;
     }
     .rot2 {
       animation: spin 12s linear infinite;
-    }
-    .paused {
+    } */
+    /* .paused {
       animation-play-state: paused !important;
-    }
+    } */
   }
 
-  @keyframes spin {
+  /* @keyframes spin {
     from {
       transform: rotate(0deg);
     }
     to {
       transform: rotate(360deg);
     }
-  }
+  } */
 </style>

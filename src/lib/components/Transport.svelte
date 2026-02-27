@@ -105,13 +105,13 @@
         reset()
         btns.rew.pressed = true
         // shuttle(true, -4)
-        speed = -4
+        speed = -8
         break
       case "fwd":
         reset()
         btns.fwd.pressed = true
         // shuttle(true, 4)
-        speed = 4
+        speed = 8
         break
     }
   }
@@ -121,7 +121,7 @@
   <div class="top">
     <Timestamp timestamp={engine.position} />
   </div>
-  <div>
+  <!-- <div>
     <input
       type="range"
       class="time-slider"
@@ -132,8 +132,16 @@
       oninput={(e) => engine.seek(Number(e.currentTarget.value))}
       disabled={engine.playState === "recording" || !engine.hasContent}
     />
-  </div>
-  <Cassette {speed} />
+  </div> -->
+
+  <Cassette
+    {speed}
+    time={engine.position}
+    max={engine.duration || 180}
+    onchange={(ts) => engine.seek(ts)}
+    isRecording={engine.playState === "recording"}
+  />
+
   <div class="ctrlButtons">
     <div class="btnLabels">
       {#each Object.entries(btns) as [type, btn]}
