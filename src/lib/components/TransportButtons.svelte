@@ -88,6 +88,7 @@
 </script>
 
 <div class="ctrlButtons">
+  <div class="rec-light"></div>
   <div class="btnLabels">
     {#each Object.entries(btns) as [type, btn]}
       <div class="btnLabel ui-label">{type}</div>
@@ -110,6 +111,12 @@
 </div>
 
 <style>
+  .rec-light {
+    position: absolute;
+    background: red;
+    height: 20px;
+    width: 46px;
+  }
   .ctrlButtons {
     display: flex;
     flex-direction: column;

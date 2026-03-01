@@ -133,7 +133,7 @@
         </div>
 
         <!-- Input Controls -->
-        <div class="cell-center" style="grid-area: 3 / 6 / 4 / 9">
+        <div class="cell-center" style="grid-area: 3 / 6 / 4 / 8">
           <Knob
             min={-1}
             max={1}
@@ -146,31 +146,31 @@
           />
         </div>
 
-        <div class="cell-center" style="grid-area: 4 / 8 / 7 / 9">
+        <div class="cell-center" style="grid-area: 4 / 7 / 7 / 8">
           <Slider />
         </div>
 
-        <div class="ui-label cell-center" style="grid-area: 7 / 8 / 8 / 9">
+        <div class="ui-label cell-center" style="grid-area: 7 / 7 / 8 / 8">
           Vol
         </div>
 
-        <div class="ui-label cell-center" style="grid-area: 8 / 6 / 9 / 9">
+        <div class="ui-label cell-center" style="grid-area: 8 / 6 / 9 / 8">
           -- Input --
         </div>
 
-        <div class="cell-center" style="grid-area: 1 / 9 / 9 / 10">
+        <div class="cell-center" style="grid-area: 1 / 8 / 9 / 9">
           <div class="separator"></div>
         </div>
 
-        <div class="cell-center" style="grid-area: 2 / 10 / 3 / 11">
+        <div class="cell-center" style="grid-area: 2 / 9 / 3 / 10">
           <Timestamp timestamp={engine.position} />
         </div>
 
-        <div class="cell-center" style="grid-area: 2 / 11 / 3 / 12">
+        <div class="cell-center" style="grid-area: 2 / 10 / 3 / 11">
           <div class="logo"></div>
         </div>
 
-        <div style="grid-area: 3 / 10 / 6 / 13">
+        <div style="grid-area: 3 / 9 / 6 / 12">
           <Cassette
             {speed}
             time={engine.position}
@@ -180,7 +180,7 @@
           />
         </div>
 
-        <div class="cell-bottom" style="grid-area: 6 / 10 / 9 / 12">
+        <div class="cell-bottom" style="grid-area: 6 / 9 / 9 / 11">
           <TransportButtons {engine} {selectedTrack} bind:speed />
         </div>
       </div>
@@ -213,8 +213,8 @@
   }
   .parent {
     display: grid;
-    grid-template-columns: 4cqw 1fr 1fr 1fr 1fr 1fr 4cqw 1fr 4cqw 20cqw 20cqw 4cqw;
-    grid-template-rows: 6cqh 1fr 1fr 1fr 1fr 1fr 6cqh 6cqh 6cqh;
+    grid-template-columns: 4cqw 1fr 1fr 1fr 1fr 1fr 1fr 1fr 20cqw 20cqw 4cqw;
+    grid-template-rows: 6cqh 1fr 1fr 1fr 1fr 1fr 4cqh 4cqh 6cqh;
     grid-column-gap: 0px;
     grid-row-gap: 0px;
     height: 100%;

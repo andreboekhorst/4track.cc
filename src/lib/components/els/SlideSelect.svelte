@@ -18,7 +18,7 @@
   ]
   let btnHeight = $state(0.55)
 
-  let { value = $bindable() } = $props()
+  let { value = $bindable(), padding = 1 } = $props() // padding: % inset top/bottom
 
   const start = (event) => {
     dragging = true
@@ -31,7 +31,7 @@
     if (!dragging) return
     const rect = trackEl.getBoundingClientRect()
     const steps = selections.length - 1
-    const adjusted_scrollarea = 1 - btnHeight
+    const adjusted_scrollarea = 1 - btnHeight - (2 * padding) / 100
     const scrollHeight = rect.height * adjusted_scrollarea
     const stepHeight = scrollHeight / steps
     const deltaSteps = Math.round((event.clientY - startY) / stepHeight)
@@ -43,7 +43,7 @@
 
     // Render
     staggeredx = selected_i / steps
-    xpos_percentage = Math.round(staggeredx * adjusted_scrollarea * 100)
+    xpos_percentage = padding + Math.round(staggeredx * adjusted_scrollarea * 100)
   }
 
   const stop = (event) => {
@@ -52,43 +52,63 @@
   }
 </script>
 
-<div
-  bind:this={trackEl}
-  class="track"
-  onpointermove={move}
-  onpointerup={stop}
-  onpointerleave={stop}
-  role="slider"
->
+<div class="slider-holder">
+  <div class="slideselect-indicator"></div>
   <div
-    class="thumb"
-    class:dragging
-    onpointerdown={start}
-    style="top: {xpos_percentage}%;  height: {btnHeight * 100}%"
-  ></div>
-  <div
-    class="slot"
-    style="height: {(1 - btnHeight) * 100}%; top: {(btnHeight / 2) * 100}%"
-  ></div>
+    bind:this={trackEl}
+    class="track"
+    onpointermove={move}
+    onpointerup={stop}
+    onpointerleave={stop}
+    role="slider"
+  >
+    <div
+      class="thumb"
+      class:dragging
+      onpointerdown={start}
+      style="top: {xpos_percentage}%;  height: {btnHeight * 100}%"
+    ></div>
+    <!-- <div
+      class="slot"
+      style="height: {(1 - btnHeight) * 100}%; top: {(btnHeight / 2) * 100}%"
+    ></div> -->
+  </div>
 </div>
 
 <style>
+  .slider-holder {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    container-type: size;
+  }
+  .slideselect-indicator {
+    position: relative;
+    background: url("/slideselect-indicator.svg");
+    background-repeat: no-repeat;
+    background-size: contain;
+    width: 72cqw;
+    height: 100%;
+    background-position: top;
+    opacity: 0.7;
+    top: 10%;
+  }
   .track {
-    width: 30px;
+    width: 28cqw;
     height: 100%;
     position: relative;
-    border-radius: 5px;
+    border-radius: 4cqw;
+    background: rgb(100, 100, 100);
     box-shadow:
-      inset 6px 12px 10px rgba(31, 31, 31, 0.75),
-      inset 1px 1px 1px rgba(31, 31, 31, 0.45),
-      inset -1px -1px 1px rgba(255, 252, 252, 0.35);
+      inset 8cqw 1cqh 12cqw rgba(31, 31, 31, 0.75),
+      inset 2cqw 0.2cqh 2cqw rgba(31, 31, 31, 0.45),
+      inset -2cqw -0.2cqh 2cqw rgba(255, 252, 252, 0.35);
 
     .slot {
       display: block;
       content: " ";
       width: 50%;
       background-color: rgb(28, 28, 29);
-      border-radius: 2px;
       position: absolute;
       margin: 0 auto;
       left: 50%;
@@ -100,15 +120,14 @@
   .thumb {
     width: 80%;
     margin: 0 10%;
-    background: url("/slider.png");
+    background: url("/slideselect-thumb.png");
     background-size: 100% 100%;
     position: absolute;
     top: 0%;
-    left: 0px;
+    left: 0;
     cursor: grab;
     z-index: 1;
-    border-radius: 7px;
-    box-shadow: 10px 5px 5px rgba(0, 0, 0, 0.4);
+    box-shadow: 10cqw 0.5cqh 10cqw rgba(0, 0, 0, 0.4);
   }
   .thumb.dragging {
     cursor: grabbing;

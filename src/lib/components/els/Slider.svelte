@@ -63,7 +63,9 @@
 <style>
   .slider-holder {
     height: 100%;
+    width: 5cqw;
     display: flex;
+    container-type: size;
   }
 
   .slider-indicator {
@@ -71,28 +73,28 @@
     background: url("/slider-indicator.svg");
     background-repeat: no-repeat;
     background-size: contain;
-    width: 36px;
+    width: 55cqw;
     height: 100%;
     background-position: center;
     opacity: 0.7;
   }
 
   .track {
-    width: 30px;
+    width: 45cqw;
     height: 100%;
     position: relative;
-    border-radius: 5px;
+    border-radius: 8cqw;
     box-shadow:
-      inset 6px 12px 10px rgba(31, 31, 31, 0.75),
-      inset 1px 1px 1px rgba(31, 31, 31, 0.45),
-      inset -1px -1px 1px rgba(255, 252, 252, 0.35);
+      inset 9cqw 2cqh 15cqw rgba(31, 31, 31, 0.75),
+      inset 1.5cqw 0.2cqh 1.5cqw rgba(31, 31, 31, 0.45),
+      inset -1.5cqw -0.2cqh 1.5cqw rgba(255, 252, 252, 0.35);
 
     .slot {
       display: block;
       content: " ";
       width: 50%;
       background-color: rgb(28, 28, 29);
-      border-radius: 2px;
+      border-radius: 3cqw;
       position: absolute;
       margin: 0 auto;
       left: 50%;
@@ -108,11 +110,11 @@
     background-size: 100% 100%;
     position: absolute;
     top: 0%;
-    left: 0px;
+    left: 0;
     cursor: grab;
     z-index: 1;
-    border-radius: 7px;
-    box-shadow: 10px 5px 5px rgba(0, 0, 0, 0.4);
+    border-radius: 10cqw;
+    box-shadow: 15cqw 1cqh 8cqw rgba(0, 0, 0, 0.4);
   }
   .thumb.dragging {
     cursor: grabbing;
