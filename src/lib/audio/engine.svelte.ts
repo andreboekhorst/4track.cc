@@ -142,11 +142,15 @@ export class AudioEngine {
 
     await Promise.all(
       configs.map(async (ht, i) => {
-        const response = await fetch(ht.url)
-        const data = await response.arrayBuffer()
-        const audioBuffer = await ctx.decodeAudioData(data)
-        hiddenTracks[i].buffer = audioBuffer
-        hiddenTracks[i].hasContent = true
+        try {
+          const response = await fetch(ht.url)
+          const data = await response.arrayBuffer()
+          const audioBuffer = await ctx.decodeAudioData(data)
+          hiddenTracks[i].buffer = audioBuffer
+          hiddenTracks[i].hasContent = true
+        } catch (e) {
+          console.warn(`Failed to load hidden track "${ht.url}":`, e)
+        }
       }),
     )
   }
@@ -371,6 +375,10 @@ export class AudioEngine {
     if (trackIndex < 0 || trackIndex >= this.tracks.length) return
     if (this.tracks[trackIndex].hidden) return
     await this.initAudioContext()
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error("Recording requires a secure context (HTTPS). Please access this app over HTTPS.")
+    }
 
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: {

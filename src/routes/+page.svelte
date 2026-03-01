@@ -16,7 +16,7 @@
 
   onMount(() => {
     engine = new AudioEngine({
-      hiddenTracks: [{ url: "casette_hiss.opus", volume: 0.08 }],
+      hiddenTracks: [{ url: "casette_hiss.mp3", volume: 0.08 }],
     })
     engine.initAudioContext()
     return () => engine?.dispose()
