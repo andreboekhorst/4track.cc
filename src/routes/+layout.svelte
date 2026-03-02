@@ -15,12 +15,23 @@
     box-sizing: border-box;
   }
 
+  :global(html) {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    overscroll-behavior: none;
+  }
+
   :global(body) {
     font-family: system-ui, sans-serif;
     margin: 0;
     min-height: 100vh;
     padding: 60px;
     background-color: #ababab;
+    overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: none;
   }
 
   :global(.cell-center) {

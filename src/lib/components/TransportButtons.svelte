@@ -88,7 +88,11 @@
 </script>
 
 <div class="ctrlButtons">
-  <div class="rec-light"></div>
+  <div class="rec-light">
+    <div class="light-bevel">
+      <div class="light high" class:active={btns.record.pressed}>&nbsp;</div>
+    </div>
+  </div>
   <div class="btnLabels">
     {#each Object.entries(btns) as [type, btn]}
       <div class="btnLabel ui-label">{type}</div>
@@ -113,10 +117,43 @@
 <style>
   .rec-light {
     position: absolute;
-    background: red;
     height: 20px;
-    width: 46px;
+    width: 45px;
+    left: -15px;
+    &.active {
+      opacity: 1;
+    }
   }
+
+  .light-bevel {
+    background: linear-gradient(to bottom, #101010, #6b6b6b);
+    top: 2px;
+    left: 2px;
+    height: 18px;
+    width: 18px;
+    margin-bottom: 12px;
+    border-radius: 15px;
+    position: relative;
+  }
+
+  .light {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 1px;
+    left: 1px;
+    border-radius: 16px;
+    background: #8f3333;
+    box-shadow: inset 1px -1px 4px 3px rgba(62, 2, 2, 0.7);
+
+    &.active {
+      background: #ff0000;
+      box-shadow:
+        inset 0px 0px 6px rgba(32, 1, 1, 0.9),
+        0px 0px 16px 16px rgba(209, 24, 24, 0.1);
+    }
+  }
+
   .ctrlButtons {
     display: flex;
     flex-direction: column;
@@ -124,6 +161,7 @@
     container-type: inline-size;
     flex: 1; /* if parent container is flex */
     padding: 0 0 0 2cqw;
+    position: relative;
   }
   .controlBtns {
     background: linear-gradient(to bottom right, #3d3c43, #646468);

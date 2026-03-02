@@ -43,7 +43,8 @@
 
     // Render
     staggeredx = selected_i / steps
-    xpos_percentage = padding + Math.round(staggeredx * adjusted_scrollarea * 100)
+    xpos_percentage =
+      padding + Math.round(staggeredx * adjusted_scrollarea * 100)
   }
 
   const stop = (event) => {
@@ -87,8 +88,8 @@
     background: url("/slideselect-indicator.svg");
     background-repeat: no-repeat;
     background-size: contain;
-    width: 72cqw;
-    height: 100%;
+    width: 100%;
+    height: 45cqh;
     background-position: top;
     opacity: 0.7;
     top: 10%;

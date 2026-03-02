@@ -374,12 +374,13 @@ export class AudioEngine {
     if (this.playState === "recording") return
     if (trackIndex < 0 || trackIndex >= this.tracks.length) return
     if (this.tracks[trackIndex].hidden) return
-    await this.initAudioContext()
 
     if (!navigator.mediaDevices?.getUserMedia) {
       throw new Error("Recording requires a secure context (HTTPS). Please access this app over HTTPS.")
     }
 
+    // Request mic access BEFORE any async work (initAudioContext fetches files)
+    // to preserve the user gesture context, which iOS Safari requires.
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: {
         ...AUDIO_CONSTRAINTS,
@@ -387,6 +388,7 @@ export class AudioEngine {
       },
     })
 
+    await this.initAudioContext()
     const ctx = this.ensureContext()
     await ctx.resume()
 
