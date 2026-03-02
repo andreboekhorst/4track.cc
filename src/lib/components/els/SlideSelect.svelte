@@ -95,7 +95,7 @@
     top: 10%;
   }
   .track {
-    width: 28cqw;
+    width: 20cqw;
     height: 100%;
     position: relative;
     border-radius: 4cqw;
