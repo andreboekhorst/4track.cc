@@ -151,7 +151,7 @@
         </div>
 
         <div class="ui-label cell-center" style="grid-area: 7 / 7 / 8 / 8">
-          Vol
+          Volume
         </div>
 
         <div class="ui-label cell-center" style="grid-area: 8 / 6 / 9 / 8">
@@ -162,15 +162,16 @@
           <div class="separator"></div>
         </div>
 
-        <div class="cell-center" style="grid-area: 2 / 9 / 3 / 10">
+        <div class="cell-center" style="grid-area: 2 / 10 / 3 / 11">
           <Timestamp timestamp={engine.position} />
         </div>
 
-        <div class="cell-center" style="grid-area: 2 / 10 / 3 / 11">
+        <div class="logos" style="grid-area: 2 / 10 / 3 / 12">
           <div class="logo"></div>
+          <div class="logo-tag"></div>
         </div>
 
-        <div style="grid-area: 3 / 9 / 6 / 12">
+        <div style="grid-area: 3 / 9 / 6 / 13">
           <Cassette
             {speed}
             time={engine.position}
@@ -180,7 +181,7 @@
           />
         </div>
 
-        <div class="cell-bottom" style="grid-area: 6 / 9 / 9 / 11">
+        <div class="cell-bottom" style="grid-area: 6 / 9 / 9 / 12">
           <TransportButtons {engine} {selectedTrack} bind:speed />
         </div>
       </div>
@@ -213,8 +214,8 @@
   }
   .parent {
     display: grid;
-    grid-template-columns: 4cqw 1fr 1fr 1fr 1fr 1fr 1fr 1fr 20cqw 20cqw 4cqw;
-    grid-template-rows: 6cqh 1fr 1fr 1fr 1fr 1fr 4cqh 4cqh 6cqh;
+    grid-template-columns: 4cqw 4cqw 1fr 1fr 3cqw 5cqw 8cqw 4cqw 11cqw 11cqw 22cqw 10cqw;
+    grid-template-rows: 5cqh 14cqh 1fr 1fr 1fr 1fr 4cqh 4cqh 6cqh;
     grid-column-gap: 0px;
     grid-row-gap: 0px;
     height: 100%;
@@ -240,13 +241,28 @@
       inset -2px -2px 4px rgba(0, 0, 0, 0.3);
   }
 
+  .logos {
+    display: flex;
+    flex-direction: column;
+    gap: 5cqh;
+  }
   .logo {
     background: url("/logo.svg");
     background-repeat: no-repeat;
     background-size: contain;
     background-position: top right;
     width: 100%;
-    height: 20px;
+    height: 18px;
+  }
+
+  .logo-tag {
+    background: url("/openstudio.svg");
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: top right;
+    width: 100%;
+    height: 22px;
+    opacity: 0.7;
   }
 
   .file-controls {

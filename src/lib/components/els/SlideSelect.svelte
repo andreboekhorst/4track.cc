@@ -82,6 +82,7 @@
     width: 100%;
     display: flex;
     container-type: size;
+    padding-top: 2cqh;
   }
   .slideselect-indicator {
     position: relative;
@@ -95,7 +96,7 @@
     top: 10%;
   }
   .track {
-    width: 20cqw;
+    width: 32cqw;
     height: 100%;
     position: relative;
     border-radius: 4cqw;
@@ -119,7 +120,7 @@
   }
 
   .thumb {
-    width: 80%;
+    width: 70%;
     margin: 0 10%;
     background: url("/slideselect-thumb.png");
     background-size: 100% 100%;

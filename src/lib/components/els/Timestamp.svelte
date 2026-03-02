@@ -25,44 +25,52 @@
   }
 </script>
 
-<div class="counter">
-  {count_to_str(timestamp)}
-  <a onclick={() => reset()}>&nbsp;</a>
+<div class="wrapper">
+  <div class="counter">
+    {count_to_str(timestamp)}
+    <a onclick={() => reset()}>&nbsp;</a>
+  </div>
 </div>
 
 <style>
+  .wrapper {
+    container-type: size;
+    height: 7cqh;
+    aspect-ratio: 180 / 80;
+  }
   .counter {
-    padding: 20px;
-    color: white;
+    padding: 11cqw 25cqh;
+    color: rgb(216, 216, 216);
     background-image: url("/counter_bg.png");
-    background-size: 100%;
+    background-size: 100% 100%;
     background-repeat: no-repeat;
-    width: 180px;
-    height: 80px;
+    width: 100cqw;
+    height: 100cqh;
     position: relative;
     user-select: none;
-    line-height: 40px;
-    font-size: 22px;
-    letter-spacing: 16px;
+    line-height: 50cqh;
+    font-size: 35cqh;
+    letter-spacing: 7cqw;
+    box-sizing: border-box;
   }
   a {
-    width: 20px;
-    height: 20px;
+    width: 11cqw;
+    height: 25cqh;
     background-color: rgb(34, 34, 34);
     border-radius: 50%;
     position: absolute;
-    right: 30px;
+    right: 16.7cqw;
     top: 50%;
-    transform: translateY(-12px);
+    transform: translateY(-15cqh);
     cursor: pointer;
     box-shadow:
-      11px 12px 10px rgba(0, 0, 0, 0.8),
-      inset 2px 2px 3px rgba(255, 255, 255, 0.4);
+      6cqw 15cqh 5.5cqw rgba(0, 0, 0, 0.8),
+      inset 1cqw 2.5cqh 1.7cqw rgba(255, 255, 255, 0.4);
 
     &:active {
       box-shadow:
-        10px 11px 11px rgba(0, 0, 0, 0.8),
-        inset 2px 2px 3px rgba(255, 255, 255, 0.4);
+        5.5cqw 13.75cqh 6cqw rgba(0, 0, 0, 0.8),
+        inset 1cqw 2.5cqh 1.7cqw rgba(255, 255, 255, 0.4);
     }
   }
 </style>

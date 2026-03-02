@@ -45,6 +45,11 @@
     align-items: end;
     justify-content: center;
   }
+  :global(.cell-right) {
+    display: flex;
+    align-items: center;
+    justify-content: right;
+  }
 
   :global(.ui-label) {
     color: rgba(255, 255, 255, 0.6);
