@@ -129,7 +129,9 @@
     left: 0;
     cursor: grab;
     z-index: 1;
-    box-shadow: 10cqw 0.5cqh 10cqw rgba(0, 0, 0, 0.4);
+    box-shadow:
+      10cqw 0.5cqh 10cqw rgba(0, 0, 0, 0.4),
+      inset 1.5cqw 0.5cqh 1cqw rgba(255, 252, 252, 0.35);
   }
   .thumb.dragging {
     cursor: grabbing;

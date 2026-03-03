@@ -49,6 +49,7 @@
 
 <svelte:head>
   <title>4track – Record</title>
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
 </svelte:head>
 
 {#if engine}
@@ -223,6 +224,16 @@
       onchange={handleFileChange}
       hidden
     />
+    <!-- Place this tag where you want the button to render. -->
+    <a
+      class="github-button"
+      href="https://github.com/andreboekhorst/4track.cc"
+      data-color-scheme="no-preference: dark; light: light; dark: dark;"
+      data-icon="octicon-star"
+      data-size="large"
+      data-show-count="true"
+      aria-label="Star andreboekhorst/4track.cc on GitHub">Star</a
+    >
   </div>
 {/if}
 
