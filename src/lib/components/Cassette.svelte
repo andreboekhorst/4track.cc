@@ -81,7 +81,7 @@
     background-color: #212124;
     border-radius: 1cqw;
     width: 85%;
-    margin: 38cqh 10cqw 20cqh 5cqw;
+    margin: 36cqh 10cqw 20cqh 5cqw;
     padding: 1.5cqw 8cqw;
     position: relative;
     cursor: ew-resize;

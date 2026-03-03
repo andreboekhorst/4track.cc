@@ -2,7 +2,7 @@
 <!-- svelte-ignore a11y_interactive_supports_focus -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <script>
-  let xpos_percentage = $state(0) // 0–100
+  let xpos_percentage = $state(2) // 0–100
   let dragging = $state(false)
   let trackEl = $state()
   let staggeredx = $state()
@@ -14,11 +14,11 @@
     { lbl: "2", val: 1 },
     { lbl: "3", val: 2 },
     { lbl: "4", val: 3 },
-    { lbl: "SAFE", val: -1 },
+    { lbl: "SAFE", val: "0" },
   ]
   let btnHeight = $state(0.55)
 
-  let { value = $bindable(), padding = 1 } = $props() // padding: % inset top/bottom
+  let { value = $bindable(), padding = 2 } = $props() // padding: % inset top/bottom
 
   const start = (event) => {
     dragging = true
@@ -82,7 +82,7 @@
     width: 100%;
     display: flex;
     container-type: size;
-    padding-top: 2cqh;
+    padding-top: 0cqh;
   }
   .slideselect-indicator {
     position: relative;
@@ -120,7 +120,7 @@
   }
 
   .thumb {
-    width: 70%;
+    width: 80%;
     margin: 0 10%;
     background: url("/slideselect-thumb.png");
     background-size: 100% 100%;
