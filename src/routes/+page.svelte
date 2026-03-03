@@ -11,7 +11,7 @@
   import TransportButtons from "$lib/components/TransportButtons.svelte"
 
   let engine: AudioEngine | null = $state(null)
-  let selectedTrack = $state(0)
+  let selectedTrack = $state(-1)
   let fileInput = $state<HTMLInputElement>(undefined!)
   let speed = $state(0)
 

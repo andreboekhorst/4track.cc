@@ -2,11 +2,9 @@
 <!-- svelte-ignore a11y_interactive_supports_focus -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <script>
-  let xpos_percentage = $state(2) // 0–100
   let dragging = $state(false)
   let trackEl = $state()
-  let staggeredx = $state()
-  let selected_i = $state(0)
+  let selected_i = $state(4)
   let startY = $state(0)
   let startIndex = $state(0)
   let selections = [
@@ -14,11 +12,17 @@
     { lbl: "2", val: 1 },
     { lbl: "3", val: 2 },
     { lbl: "4", val: 3 },
-    { lbl: "SAFE", val: "0" },
+    { lbl: "SAFE", val: -1 },
   ]
-  let btnHeight = $state(0.55)
+  let btnHeight = 0.55
 
   let { value = $bindable(), padding = 2 } = $props() // padding: % inset top/bottom
+
+  const steps = selections.length - 1
+  const adjusted_scrollarea = 1 - btnHeight - (2 * padding) / 100
+  let xpos_percentage = $derived(
+    padding + Math.round((selected_i / steps) * adjusted_scrollarea * 100)
+  )
 
   const start = (event) => {
     dragging = true
@@ -40,11 +44,6 @@
 
     // This is the bindable value
     value = selections[selected_i]?.val
-
-    // Render
-    staggeredx = selected_i / steps
-    xpos_percentage =
-      padding + Math.round(staggeredx * adjusted_scrollarea * 100)
   }
 
   const stop = (event) => {
