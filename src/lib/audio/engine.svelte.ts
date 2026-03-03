@@ -394,8 +394,8 @@ export class AudioEngine {
   /** Arms and starts recording on the given track. Sets up mic input, FX chain, and monitoring. */
   async record(trackIndex: number): Promise<void> {
     if (this.playState === "recording") return
-    if (trackIndex < 0 || trackIndex >= this.tracks.length) return
-    if (this.tracks[trackIndex].hidden) return
+    if (trackIndex < -1 || trackIndex >= this.tracks.length) return
+    if (trackIndex >= 0 && this.tracks[trackIndex].hidden) return
 
     if (!navigator.mediaDevices?.getUserMedia) {
       this.micStatus = "unsupported"
@@ -492,7 +492,7 @@ export class AudioEngine {
 
   /** Tears down the recording chain, merges captured audio into the track buffer with latency compensation. */
   private stopRecording(): void {
-    const selectedTrackIndex = this.recordingTrackIndex ?? 0
+    const selectedTrackIndex = this.recordingTrackIndex ?? -1
     const recordLatencySeconds = this.recordingLatencySeconds
     this.recordingTrackIndex = null
 
@@ -538,7 +538,7 @@ export class AudioEngine {
       ),
     )
 
-    if (this.recordedChunks.length && ctx) {
+    if (selectedTrackIndex >= 0 && this.recordedChunks.length && ctx) {
       const track = this.tracks[selectedTrackIndex]
       const hadExistingBuffer = track.buffer !== null
 

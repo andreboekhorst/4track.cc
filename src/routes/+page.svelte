@@ -126,7 +126,7 @@
         </div>
 
         <div class="cell-center" style="grid-area: 5 / 6 / 7 / 7">
-          <SlideSelect />
+          <SlideSelect bind:value={selectedTrack} />
         </div>
 
         <div class="ui-label cell-center" style="grid-area: 7 / 6 / 8 / 7">

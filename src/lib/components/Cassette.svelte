@@ -69,9 +69,11 @@
   .casette {
     height: 95%;
     container-type: size;
-    border: 0.2cqw solid #1c1c1f;
-    border-radius: 0.5cqw;
-    box-shadow: inset 0.25cqw 0.25cqw 0 0 rgb(136 132 132);
+    border-top: 0.8cqh solid #1a1a1b;
+    border-left: 0.3cqw solid #1a1a1b;
+    border-bottom: 0.8cqh solid #1a1a1b;
+    border-radius: 0.8cqw 0 0 0.8cqw;
+    box-shadow: inset 0.15cqw 0.15cqw 0 0 rgb(136 132 132);
     background: radial-gradient(ellipse at top left, #5d6066, #383840);
   }
 

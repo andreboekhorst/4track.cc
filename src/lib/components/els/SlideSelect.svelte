@@ -14,7 +14,7 @@
     { lbl: "2", val: 1 },
     { lbl: "3", val: 2 },
     { lbl: "4", val: 3 },
-    { lbl: "SAFE", val: "0" },
+    { lbl: "SAFE", val: -1 },
   ]
   let btnHeight = $state(0.55)
 

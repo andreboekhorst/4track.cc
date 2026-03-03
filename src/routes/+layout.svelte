@@ -55,6 +55,6 @@
     color: rgba(255, 255, 255, 0.6);
     text-transform: uppercase;
     /* letter-spacing: 0.1vw; */
-    font-size: 0.8vw;
+    font-size: 1.8cqh;
   }
 </style>
