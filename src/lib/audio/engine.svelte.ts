@@ -11,7 +11,7 @@ import {
 } from "./constants.js"
 import { buildInputFxChain, applyTrim } from "./input-fx.js"
 import { measureRecordLatency, mergeRecordingIntoBuffer } from "./recording.js"
-import { updateMeterLevels, resetMeterLevels } from "./metering.js"
+import { updateMeterLevels } from "./metering.js"
 import {
   exportProject as _exportProject,
   importProject as _importProject,
@@ -129,6 +129,8 @@ export class AudioEngine {
       track.analyserNode = analyser
       track.panNode = pan
     }
+
+    this.startMeters()
   }
 
   // ─── Audio Context Initialization ─────────────────────────────────
@@ -210,7 +212,6 @@ export class AudioEngine {
     if (this.playState === "playing") {
       this.stopSources(this.activePlaybackSources)
       this.clearPlaybackTick()
-      this.stopMeters()
       this.startPlayback(clamped)
     }
   }
@@ -258,7 +259,6 @@ export class AudioEngine {
     this.position = Math.round(offsetSeconds * 10) / 10
     this.playState = "playing"
 
-    this.startMeters()
     this.playbackTickId = window.setInterval(() => {
       const elapsed = ctx.currentTime - this.playbackStartTime
       this.position = Math.round((this.playbackOffset + elapsed) * 10) / 10
@@ -266,7 +266,6 @@ export class AudioEngine {
         this.playbackOffset = maxDuration
         this.position = Math.round(maxDuration * 10) / 10
         this.clearPlaybackTick()
-        this.stopMeters()
         this.playState = "stopped"
       }
     }, PLAYBACK_TICK_MS)
@@ -284,7 +283,6 @@ export class AudioEngine {
       this.stopSources(this.activePlaybackSources)
     }
     this.clearPlaybackTick()
-    this.stopMeters()
     this.position = Math.round(this.playbackOffset * 10) / 10
     this.playState = "paused"
   }
@@ -305,7 +303,6 @@ export class AudioEngine {
         this.stopSources(this.activePlaybackSources)
       }
       this.clearPlaybackTick()
-      this.stopMeters()
       this.position = Math.round(this.playbackOffset * 10) / 10
     }
     this.playState = "stopped"
@@ -318,7 +315,6 @@ export class AudioEngine {
     this.playbackOffset = 0
     this.position = 0
     this.clearPlaybackTick()
-    this.stopMeters()
     this.playState = "stopped"
   }
 
@@ -461,7 +457,8 @@ export class AudioEngine {
     }
     prev.connect(this.recVolNode)
     this.recVolNode.connect(worklet)
-    worklet.connect(ctx.destination)
+    const track = this.tracks[trackIndex]
+    worklet.connect(track.gainNode!)
 
     this.recorderSourceNode = source
     this.recorderWorkletNode = worklet
@@ -526,7 +523,6 @@ export class AudioEngine {
 
     // Play other tracks for overdub monitoring, start meters and position timer
     this.playOtherTracksForMonitoring(trackIndex, this.punchInOffset)
-    this.startMeters()
 
     this.timerId = window.setInterval(() => {
       const next = this.position + 1
@@ -562,7 +558,6 @@ export class AudioEngine {
 
     this.stopAllPlayback()
     this.clearTimer()
-    this.stopMeters()
 
     // Merge recorded audio into the track buffer with latency compensation
     const trimSamples = Math.max(
@@ -665,7 +660,6 @@ export class AudioEngine {
       cancelAnimationFrame(this.meterRafId)
       this.meterRafId = null
     }
-    resetMeterLevels(this.tracks)
   }
 
   // ─── Save / Load ────────────────────────────────────────────────────
