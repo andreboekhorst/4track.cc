@@ -215,7 +215,8 @@
       position: relative;
       width: 100%;
       height: 100%;
-      /* mix-blend-mode: overlay; */
+      max-width: 70vw;
+      mix-blend-mode: overlay;
 
       .line1 {
         position: absolute;

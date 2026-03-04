@@ -28,10 +28,28 @@
     font-family: system-ui, sans-serif;
     margin: 0;
     min-height: 100vh;
-    background: radial-gradient(ellipse at top left, #ffffff, #b7b7b7);
+    background: radial-gradient(ellipse at top left, #f2f5f7, #b2b6bc);
     overflow: hidden;
     overscroll-behavior: none;
     touch-action: none;
+    &:before {
+      content: " ";
+      position: absolute;
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: url("/noise_100.jpg");
+      background-size: 125px;
+      mix-blend-mode: multiply;
+      opacity: 0.5;
+    }
+  }
+
+  :global(header) {
+    height: 10cqh;
+    display: flex;
+    justify-content: right;
+    padding: 20px;
   }
 
   :global(.cell-center) {

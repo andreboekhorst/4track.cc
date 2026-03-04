@@ -49,7 +49,17 @@
 </script>
 
 <svelte:head>
-  <title>4track – Record</title>
+  <title>4Track – Open-Source 4-Track Recorder</title>
+  <meta
+    name="description"
+    content="Record, overdub, and mix 4 tracks in your browser with an open-source cassette recorder interface."
+  />
+  <meta property="og:title" content="4Track – Open-Source 4-Track Recorder" />
+  <meta
+    property="og:description"
+    content="Record, overdub, and mix 4 tracks in your browser with an open-source cassette recorder interface."
+  />
+  <meta property="og:type" content="website" />
   <script async defer src="https://buttons.github.io/buttons.js"></script>
 </svelte:head>
 
@@ -88,8 +98,8 @@
   {/snippet}
   <header>
     <div class="file-controls">
-      <button onclick={handleSave} disabled={!engine.hasContent}>Save</button>
-      <button onclick={handleLoad}>Load</button>
+      <!-- <button onclick={handleSave} disabled={!engine.hasContent}>Save</button>
+      <button onclick={handleLoad}>Load</button> -->
       <input
         type="file"
         accept=".4trk"
@@ -97,7 +107,7 @@
         onchange={handleFileChange}
         hidden
       />
-      <!-- Place this tag where you want the button to render. -->
+
       <a
         class="github-button"
         href="https://github.com/andreboekhorst/4track.cc"
@@ -274,23 +284,27 @@
   .frame {
     container-type: size;
     background: linear-gradient(to bottom, #616161, #3b3b3b);
-    padding: 3px;
+    padding: 1px;
     border-radius: 12px 12px 40px 40px;
     aspect-ratio: 1 / 0.6;
-    max-height: 80vh;
-    max-width: 85nvw;
+    max-height: 75vh;
+    max-width: 80vw;
+
     margin: 0 auto;
     min-width: 960px;
     min-height: 576px;
     user-select: none;
-    /* box-shadow: 0px 0px 70px 10px rgba(29, 30, 33, 0.465); */
+
+    box-shadow: 30px 20px 30px 0px rgb(33 34 36 / 31%);
   }
 
   .app {
     background: radial-gradient(ellipse at top left, #686b71, #383840);
     border-radius: 10px 10px 36px 36px;
     height: 100cqh;
-    box-shadow: inset 0.2cqw 0.5cqh 0.4cqw rgb(225 225 225 / 50%);
+    box-shadow:
+      inset 0.2cqw 0.5cqh 0.4cqw rgb(225 225 225 / 50%),
+      inset -0.2cqw -0.5cqh 0.4cqw rgba(21, 21, 21, 0.5);
     position: relative;
   }
 
@@ -304,6 +318,7 @@
     mix-blend-mode: multiply;
     position: absolute;
     opacity: 0.9;
+    border-radius: 10px 10px 36px 36px;
   }
 
   .logos {
@@ -328,13 +343,6 @@
     width: 100%;
     height: 2.75cqh;
     opacity: 0.6;
-  }
-
-  .file-controls {
-    display: flex;
-    gap: 0.5rem;
-    justify-content: center;
-    margin-top: 1rem;
   }
 
   button {

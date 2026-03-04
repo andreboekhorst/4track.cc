@@ -457,8 +457,12 @@ export class AudioEngine {
     }
     prev.connect(this.recVolNode)
     this.recVolNode.connect(worklet)
-    const track = this.tracks[trackIndex]
-    worklet.connect(track.gainNode!)
+    if (trackIndex >= 0) {
+      const track = this.tracks[trackIndex]
+      worklet.connect(track.gainNode!)
+    } else {
+      worklet.connect(this.masterGainNode!)
+    }
 
     this.recorderSourceNode = source
     this.recorderWorkletNode = worklet
