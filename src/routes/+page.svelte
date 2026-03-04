@@ -176,7 +176,12 @@
         </div>
 
         <div class="cell-center" style="grid-area: 4 / 7 / 7 / 8">
-          <Slider />
+          <Slider
+            min={0}
+            max={1.5}
+            bind:value={engine.recordingVolume}
+            onchange={(vol) => engine.setRecordingVolume(vol)}
+          />
         </div>
 
         <div class="ui-label cell-center" style="grid-area: 7 / 7 / 8 / 8">
@@ -263,7 +268,7 @@
   .frame {
     container-type: size;
     background: linear-gradient(to bottom, #616161, #3b3b3b);
-    padding: 2px;
+    padding: 3px;
     border-radius: 12px 12px 40px 40px;
     aspect-ratio: 1 / 0.6;
     max-height: 80vh;
@@ -272,6 +277,7 @@
     min-width: 960px;
     min-height: 576px;
     user-select: none;
+    box-shadow: 0px 0px 70px 10px rgba(29, 30, 33, 0.465);
   }
 
   .app {
@@ -287,7 +293,7 @@
     width: 100%;
     height: 100%;
     display: block;
-    background: url("/noise_100.jpg");
+    background: url("/noise_50.jpg");
     background-size: 50px;
     mix-blend-mode: multiply;
     position: absolute;

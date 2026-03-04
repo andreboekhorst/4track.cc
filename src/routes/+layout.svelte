@@ -29,7 +29,7 @@
     margin: 0;
     min-height: 100vh;
     padding: 60px;
-    background-color: #ababab;
+    background: radial-gradient(ellipse at center center, #6a6a6a, #090909);
     overflow: hidden;
     overscroll-behavior: none;
     touch-action: none;

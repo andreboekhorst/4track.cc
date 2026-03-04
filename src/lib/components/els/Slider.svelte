@@ -2,20 +2,28 @@
 <!-- svelte-ignore a11y_interactive_supports_focus -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <script>
-  let { value = $bindable(0), btnHeight = 0.35, padding = 1 } = $props() // value: 0–100, btnHeight: fraction of track, padding: % inset top/bottom
+  let { value = $bindable(0), min = 0, max = 1, onchange, btnHeight = 0.35, padding = 1 } = $props()
   let dragging = $state(false)
   let trackEl = $state()
   let startY = $state(0)
-  let startValue = $state(0)
+  let startNorm = $state(0)
 
+  function normalizeValue(val) {
+    return (val - min) / (max - min)
+  }
+  function denormalizeValue(norm) {
+    return min + norm * (max - min)
+  }
+
+  // Inverted: top = max, bottom = min (like a real fader)
   let topPercent = $derived(
-    padding + (value / 100) * (1 - btnHeight - (2 * padding) / 100) * 100,
+    padding + ((1 - normalizeValue(value)) * (1 - btnHeight - (2 * padding) / 100) * 100),
   )
 
   const start = (event) => {
     dragging = true
     startY = event.clientY
-    startValue = value
+    startNorm = normalizeValue(value)
     trackEl.setPointerCapture(event.pointerId)
   }
 
@@ -24,8 +32,11 @@
     const rect = trackEl.getBoundingClientRect()
     const deltaY = event.clientY - startY
     const scrollHeight = rect.height * (1 - btnHeight)
-    const deltaPercent = (deltaY / scrollHeight) * 100
-    value = Math.round(Math.max(0, Math.min(startValue + deltaPercent, 100)))
+    // Inverted: dragging down decreases value
+    const deltaNorm = -(deltaY / scrollHeight)
+    const newNorm = Math.max(0, Math.min(startNorm + deltaNorm, 1))
+    value = denormalizeValue(newNorm)
+    onchange?.(value)
   }
 
   const stop = (event) => {
