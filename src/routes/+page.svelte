@@ -137,7 +137,14 @@
           handleUrlLoad(
             "https://s3.eu-north-1.amazonaws.com/4track.cc/track_insync.4trk",
           )
-        }}>Load Demo</button
+        }}>Load Demo 1</button
+      >
+      <button
+        onclick={() => {
+          handleUrlLoad(
+            "https://s3.eu-north-1.amazonaws.com/4track.cc/departure.4trk",
+          )
+        }}>Load Demo 2</button
       >
 
       <button onclick={handleSave} disabled={!engine.hasContent}>Save</button>
@@ -381,10 +388,10 @@
       position: absolute;
       content: " ";
       width: 96%;
-      height: 8px;
+      height: 0.5cqw;
       margin: 0 2%;
       background: linear-gradient(to right, #6f7074, #505252);
-      top: -8px;
+      top: -0.5cqw;
       border-radius: 10cqw 10cqw 0 0;
       box-shadow: inset 0cqw 0.3cqh 0.2cqw rgb(225 225 225 / 40%);
       border: 1px solid #686868;
