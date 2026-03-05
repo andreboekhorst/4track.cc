@@ -146,7 +146,13 @@
           )
         }}>Load Demo 2</button
       >
-
+      <button
+        onclick={() => {
+          handleUrlLoad(
+            "https://s3.eu-north-1.amazonaws.com/4track.cc/smelly.4trk",
+          )
+        }}>Load Demo 3</button
+      >
       <button onclick={handleSave} disabled={!engine.hasContent}>Save</button>
       <button onclick={handleLoad}>Load</button>
       <input
