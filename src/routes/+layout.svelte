@@ -27,7 +27,7 @@
   :global(body) {
     font-family: system-ui, sans-serif;
     margin: 0;
-    min-height: 100vh;
+    min-height: 100dvh;
     background: radial-gradient(ellipse at top left, #f2f5f7, #b2b6bc);
     overflow: hidden;
     overscroll-behavior: none;

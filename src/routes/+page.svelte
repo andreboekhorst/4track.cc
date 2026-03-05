@@ -329,7 +329,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    height: 100dvh;
   }
   .center {
     flex: 1;
@@ -361,11 +361,11 @@
     aspect-ratio: 1 / 0.6;
     margin: 0 auto; /* min-width: 960px; */
 
-    max-height: 75vh;
+    max-height: 75dvh;
     max-width: 90vw;
 
     @media (max-width: 1024px) {
-      max-height: 90vh;
+      max-height: 90dvh;
       max-width: 95vw;
     }
 
