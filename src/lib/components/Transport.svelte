@@ -1,9 +1,7 @@
 <script lang="ts">
   import type { AudioEngine } from "$lib"
-  import Button from "./els/recorder/Button.svelte"
   import Cassette from "./Cassette.svelte"
   import Timestamp from "./els/Timestamp.svelte"
-  import { onDestroy } from "svelte"
 
   let {
     engine,
@@ -26,7 +24,12 @@
     let timer: ReturnType<typeof setInterval> | undefined
     if (speed != 0) {
       timer = setInterval(() => {
-        var newpos = Math.max(0, engine.position + speed / 50)
+        const newval = engine.position + speed / 50
+        console.log(newval)
+        if (speed < 0 && newval < 0) {
+          console.log("STOP!")
+        }
+        var newpos = Math.max(0, newval)
         newpos = Math.min(newpos, engine.duration)
         engine.seek(newpos)
       }, 10)
@@ -37,24 +40,6 @@
       clearInterval(timer)
     }
   })
-
-  // onDestroy(() => {
-  //   clearInterval(timer)
-  // })
-
-  // function shuttle(on: boolean, speed: number = 1) {
-  //   if (on) {
-  //     clearInterval(timer)
-  //     timer = setInterval(() => {
-  //       var newpos = Math.max(0, engine.position + speed / 50)
-  //       newpos = Math.min(newpos, engine.duration)
-  //       engine.seek(newpos)
-  //     }, 10) //Update every 10ms instead of each ms
-  //   } else {
-  //     clearInterval(timer)
-  //     engine.stop()
-  //   }
-  // }
 
   function reset() {
     // Stop Rew/Fwd
@@ -68,8 +53,6 @@
     })
   }
 
-  // TODO: When we have pressed record, but it's on pause. we might still needt
-  // to enable the monitor...
   function clicky(btnType: string) {
     switch (btnType) {
       case "play":

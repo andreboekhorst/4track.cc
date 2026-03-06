@@ -2,11 +2,13 @@
 <!-- svelte-ignore a11y_interactive_supports_focus -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <script>
+  import { playFx } from "$lib/fx/soundfx"
   let dragging = $state(false)
   let trackEl = $state()
   let selected_i = $state(4)
   let startY = $state(0)
   let startIndex = $state(0)
+  let initialized = false // to disable sound fx on loading of the component
   let selections = [
     { lbl: "TRK 1", val: 0 },
     { lbl: "2", val: 1 },
@@ -21,7 +23,7 @@
   const steps = selections.length - 1
   const adjusted_scrollarea = 1 - btnHeight - (2 * padding) / 100
   let xpos_percentage = $derived(
-    padding + Math.round((selected_i / steps) * adjusted_scrollarea * 100)
+    padding + Math.round((selected_i / steps) * adjusted_scrollarea * 100),
   )
 
   const start = (event) => {
@@ -51,6 +53,17 @@
     dragging = false
     event.target.releasePointerCapture?.(event.pointerId)
   }
+
+  $effect(() => {
+    const trigger = value // We are referencing value so that Svelte triggers the effect smartly
+
+    if (!initialized) {
+      initialized = true
+      return
+    }
+
+    playFx("track")
+  })
 </script>
 
 <div class="slider-holder">

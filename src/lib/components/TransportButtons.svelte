@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { AudioEngine } from "$lib"
   import Light from "$lib/components/els/Light.svelte"
-
+  import { playFx, playLoop, stopLoop } from "$lib/fx/soundfx"
   let {
     engine,
     selectedTrack,
@@ -27,6 +27,15 @@
 
   $effect(() => {
     let timer: ReturnType<typeof setInterval> | undefined
+
+    // Trigger stop when rewinding and reaching the end
+    if (speed < 0 && engine.position + speed / 50 <= 0) {
+      clicky("stop")
+    }
+    if (engine.position + speed / 50 > engine.duration) {
+      clicky("stop")
+    }
+
     if (speed != 0) {
       timer = setInterval(() => {
         var newpos = Math.max(0, engine.position + speed / 50)
@@ -55,22 +64,32 @@
   function clicky(btnType: string) {
     switch (btnType) {
       case "play":
+        if (btns.play.pressed) return
+        playFx("play")
+        stopLoop("ffwd")
         reset()
         btns.play.pressed = true
         if (!isPaused) engine.play()
         break
       case "stop":
         reset()
+        playFx("stop")
+        stopLoop("ffwd")
+
         break
       case "pause":
         isPaused = !isPaused
         btns.pause.pressed = isPaused
         if (isPaused) {
+          playFx("pause")
+
           engine.stop()
           if (btns.record.pressed) {
             engine.startMonitoring(selectedTrack)
           }
         } else {
+          playFx("pause")
+
           if (btns.record.pressed) {
             engine.record(selectedTrack)
           } else if (btns.play.pressed) {
@@ -79,6 +98,9 @@
         }
         break
       case "record":
+        if (btns.record.pressed) return
+        playFx("record")
+
         reset()
         btns.record.pressed = true
         btns.play.pressed = true
@@ -91,11 +113,14 @@
         break
       case "rew":
         reset()
+        playLoop("ffwd")
+
         btns.rew.pressed = true
         speed = -8
         break
       case "ffwd":
         reset()
+        playLoop("ffwd")
         btns.ffwd.pressed = true
         speed = 8
         break

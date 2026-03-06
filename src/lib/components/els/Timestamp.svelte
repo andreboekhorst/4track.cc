@@ -3,6 +3,7 @@
 <!-- svelte-ignore a11y_missing_attribute -->
 <script lang="ts">
   let { timestamp } = $props()
+  import { playFx } from "$lib/fx/soundfx"
 
   // We set the correction to the current state each time the button is pressed
   // Mimicing a reset of the index.
@@ -21,6 +22,7 @@
   }
 
   function reset() {
+    playFx("counter")
     correction = timestamp
   }
 </script>
@@ -28,7 +30,7 @@
 <div class="wrapper">
   <div class="counter">
     {count_to_str(timestamp)}
-    <a onclick={() => reset()}>&nbsp;</a>
+    <a onmousedown={() => reset()}>&nbsp;</a>
   </div>
 </div>
 
