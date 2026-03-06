@@ -66,7 +66,10 @@
       case "play":
         if (btns.play.pressed) return
         playFx("play")
-        stopLoop("ffwd")
+        if (btns.ffwd.pressed || btns.rew.pressed) {
+          stopLoop("ffwd")
+          playFx("stop")
+        }
         reset()
         btns.play.pressed = true
         if (!isPaused) engine.play()
@@ -100,7 +103,10 @@
       case "record":
         if (btns.record.pressed) return
         playFx("record")
-
+        if (btns.ffwd.pressed || btns.rew.pressed) {
+          stopLoop("ffwd")
+          playFx("stop")
+        }
         reset()
         btns.record.pressed = true
         btns.play.pressed = true
