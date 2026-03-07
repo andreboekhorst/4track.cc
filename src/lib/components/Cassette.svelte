@@ -130,7 +130,7 @@
       display: flex;
       gap: 16cqw;
       overflow: hidden;
-      height: 22cqh;
+      height: 23cqh;
       justify-content: center;
     }
 

@@ -24,6 +24,7 @@
     "@sveltejs/adapter-static": "^3.0.10",
     "prettier": "^3.8.1",
     "prettier-plugin-svelte": "^3.5.0",
+    "sass": "^1.97.3",
     "svelte-check": "^4.3.6",
     "typescript": "^5.9.3",
     "vite-plugin-devtools-json": "^1.0.0"

@@ -23,7 +23,7 @@ export class AudioEngine {
   playState = $state<PlayState>("stopped")
   micStatus = $state<MicStatus>("unsupported")
   position = $state(0)
-  masterVolume = $state(1.0)
+  masterVolume = $state(1.5)
   latencyInfo = $state("")
   trimValue = $state(-1)
   recordingVolume = $state(0.75)

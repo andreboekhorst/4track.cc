@@ -129,55 +129,7 @@
       />
     </div>
   {/snippet}
-  <header>
-    <div class="file-controls">
-      <!-- <input type="text" bind:value={uploadFile} /> -->
-      <button
-        onclick={() => {
-          handleUrlLoad(
-            "https://s3.eu-north-1.amazonaws.com/4track.cc/track_insync.4trk",
-          )
-        }}>Load Demo 1</button
-      >
-      <button
-        onclick={() => {
-          handleUrlLoad(
-            "https://s3.eu-north-1.amazonaws.com/4track.cc/departure.4trk",
-          )
-        }}>Load Demo 2</button
-      >
-      <button
-        onclick={() => {
-          handleUrlLoad(
-            "https://s3.eu-north-1.amazonaws.com/4track.cc/smelly.4trk",
-          )
-        }}>Load Demo 3</button
-      >
-      <button onclick={handleSave} disabled={!engine.hasContent}>Save</button>
-      <button onclick={handleLoad}>Load</button>
-      <input
-        type="file"
-        accept=".4trk"
-        bind:this={fileInput}
-        onchange={handleFileChange}
-        hidden
-      />
 
-      {#if loadProgress > 0}
-        ({loadProgress}%)
-      {/if}
-
-      <!-- <a
-        class="github-button"
-        href="https://github.com/andreboekhorst/4track.cc"
-        data-color-scheme="no-preference: dark; light: light; dark: dark;"
-        data-icon="octicon-star"
-        data-size="large"
-        data-show-count="true"
-        aria-label="Star andreboekhorst/4track.cc on GitHub">Star</a
-      > -->
-    </div>
-  </header>
   <div class="align">
     <div class="center">
       <div class="frame">
@@ -336,6 +288,47 @@
           </div>
         </div>
       </div>
+
+      <div class="menu">
+        <a
+          onclick={() => {
+            handleUrlLoad(
+              "https://s3.eu-north-1.amazonaws.com/4track.cc/track_insync.4trk",
+            )
+          }}>Load Demo 1</a
+        >
+        <a
+          onclick={() => {
+            handleUrlLoad(
+              "https://s3.eu-north-1.amazonaws.com/4track.cc/departure.4trk",
+            )
+          }}>Demo 2</a
+        >
+        <a
+          onclick={() => {
+            handleUrlLoad(
+              "https://s3.eu-north-1.amazonaws.com/4track.cc/smelly.4trk",
+            )
+          }}>Demo 3</a
+        >
+        <a onclick={handleSave} disabled={!engine.hasContent}>Save to disk</a>
+
+        <a onclick={handleLoad}>Load</a>
+
+        <a href="https://github.com/andreboekhorst/4track.cc" target="_blank"
+          >Github</a
+        >
+      </div>
+
+      <div class="menu-footer">
+        {#if loadProgress > 0}
+          Loading ({loadProgress}%)
+        {:else}
+          By <a href="https://www.andreboekhorst.nl" target="_blank"
+            >André Boekhorst</a
+          > - Demos are recorded on a Macbook with built-in Mic.
+        {/if}
+      </div>
     </div>
   </div>
 {/if}
@@ -373,7 +366,7 @@
     container-type: size;
     background: linear-gradient(to bottom, #616161, #3b3b3b);
     padding: 1px;
-    border-radius: 1.2cqw 1.2cqw 3.6cqw 3.6cqw;
+    border-radius: 1cqw 1cqw 2.5cqw 2.5cqw;
     aspect-ratio: 1 / 0.6;
     margin: 0 auto; /* min-width: 960px; */
 
@@ -486,5 +479,43 @@
   .cell-timestamp {
     padding-top: 3cqh;
     padding-left: 2cqw;
+  }
+  .menu {
+    /* height: 40px; */
+    font-size: 14px;
+    letter-spacing: 1px;
+    /* line-height: 20px; */
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 4vh;
+    margin-bottom: 1.5vh;
+    text-transform: uppercase;
+
+    a {
+      border: 2px solid #a3a3a3;
+      border-radius: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+      text-decoration: none;
+      color: #3e3e3e;
+      &:hover {
+        background: rgb(209, 209, 209);
+      }
+      &:visited {
+        color: black;
+      }
+    }
+  }
+  .menu-footer {
+    text-align: center;
+    font-style: italic;
+    font-size: 14px;
+    font-family: Georgia, "Times New Roman", Times, serif;
+    color: rgb(74, 74, 74);
+    a,
+    a:visited {
+      color: rgb(74, 74, 74);
+    }
   }
 </style>

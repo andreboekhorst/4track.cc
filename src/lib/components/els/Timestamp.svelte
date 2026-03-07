@@ -4,9 +4,8 @@
 <script lang="ts">
   let { timestamp } = $props()
   import { playFx } from "$lib/fx/soundfx"
+  import DigitRoller from "./DigitRoller.svelte"
 
-  // We set the correction to the current state each time the button is pressed
-  // Mimicing a reset of the index.
   let correction = $state(0)
   function count_to_str(nr: number) {
     var cor_nr = Math.floor(nr - correction)
@@ -21,27 +20,45 @@
     }
   }
 
+  function get_digit(nr, i) {
+    return count_to_str(nr).charAt(i)
+  }
+
   function reset() {
     playFx("counter")
     correction = timestamp
   }
 </script>
 
+<!-- <div>{count_to_str(timestamp)}</div> -->
+
 <div class="wrapper">
   <div class="counter">
-    {count_to_str(timestamp)}
     <a onmousedown={() => reset()}>&nbsp;</a>
+    <div class="number-ticker">
+      <DigitRoller digit={get_digit(timestamp, 0)} />
+      <DigitRoller digit={get_digit(timestamp, 1)} />
+      <DigitRoller digit={get_digit(timestamp, 2)} />
+    </div>
   </div>
 </div>
 
-<style>
+<style lang="scss">
+  .number-ticker {
+    display: flex;
+    height: 17cqw;
+    overflow: hidden;
+    .index {
+    }
+  }
+
   .wrapper {
     container-type: size;
     height: 8cqh;
     aspect-ratio: 180 / 80;
   }
   .counter {
-    padding: 11cqw 25cqh;
+    padding: 15.2cqw 17cqh 13.8cqw;
     color: rgb(216, 216, 216);
     background-image: url("/counter_bg.png");
     background-size: 100% 100%;
@@ -50,9 +67,7 @@
     height: 100cqh;
     position: relative;
     user-select: none;
-    line-height: 50cqh;
-    font-size: 35cqh;
-    letter-spacing: 7cqw;
+
     box-sizing: border-box;
   }
   a {
