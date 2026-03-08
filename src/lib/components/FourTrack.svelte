@@ -1,6 +1,6 @@
 <script lang="ts">
   import { AudioEngine } from "$lib/audio/engine.svelte.js"
-  import type { HiddenTrackConfig } from "$lib/types.js"
+  import type { HiddenTrackConfig, LoadStatus } from "$lib/types.js"
   import casetteHissUrl from "../assets/casette_hiss.mp3"
   import noiseImg from "../assets/noise_50.jpg"
   import logoImg from "../assets/logo.svg?url"
@@ -21,12 +21,16 @@
     save = $bindable(),
     load = $bindable(),
     initialProject,
+    status = $bindable<LoadStatus>("idle"),
+    loadProgress = $bindable(0),
   }: {
     hiddenTracks?: HiddenTrackConfig[]
     onready?: (detail: { engine: AudioEngine }) => void
     save?: () => Blob
     load?: (source: File | string) => Promise<void>
     initialProject?: string | File
+    status?: LoadStatus
+    loadProgress?: number
   } = $props()
 
   let engine: AudioEngine | null = $state(null)
@@ -34,20 +38,62 @@
   let speed = $state(0)
   let recordEngaged = $state(false)
 
+  async function fetchWithProgress(url: string): Promise<File> {
+    const response = await fetch(url)
+    const contentLength = response.headers.get("Content-Length")
+
+    if (!contentLength || !response.body) {
+      const buffer = await response.arrayBuffer()
+      loadProgress = 1
+      return new File([buffer], "project.4trk")
+    }
+
+    const total = parseInt(contentLength, 10)
+    const reader = response.body.getReader()
+    const chunks: Uint8Array[] = []
+    let received = 0
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      chunks.push(value)
+      received += value.length
+      loadProgress = received / total
+    }
+
+    const buffer = new Uint8Array(received)
+    let offset = 0
+    for (const chunk of chunks) {
+      buffer.set(chunk, offset)
+      offset += chunk.length
+    }
+
+    return new File([buffer], "project.4trk")
+  }
+
   onMount(async () => {
     engine = new AudioEngine({ hiddenTracks })
     engine.initAudioContext()
 
     save = () => engine!.exportProject()
     load = async (source: File | string) => {
-      const file = typeof source === 'string'
-        ? new File([await (await fetch(source)).arrayBuffer()], 'project.4trk')
-        : source
-      await engine!.importProject(file)
+      status = "loading"
+      loadProgress = 0
+      try {
+        const file =
+          typeof source === "string" ? await fetchWithProgress(source) : source
+        await engine!.importProject(file)
+        status = "ready"
+      } catch (e) {
+        status = "error"
+        throw e
+      }
     }
 
     if (initialProject) {
       await load(initialProject)
+    } else {
+      status = "ready"
     }
 
     onready?.({ engine })
@@ -278,13 +324,13 @@
     container-type: size;
     aspect-ratio: 1 / 0.6;
     width: 100%;
-    max-height: 75dvh;
-    max-width: min(90vw, calc(75dvh / 0.6));
+    /* max-height: 75dvh; */
+    /* max-width: min(90vw, calc(75dvh / 0.6)); */
     user-select: none;
 
     @media (max-width: 1024px) {
       max-height: 90dvh;
-      max-width: min(95vw, calc(90dvh / 0.6));
+      /* max-width: min(95vw, calc(90dvh / 0.6)); */
     }
   }
 
