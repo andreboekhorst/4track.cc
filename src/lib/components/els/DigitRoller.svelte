@@ -58,6 +58,7 @@
     color: #cfcdd3;
     background: linear-gradient(to bottom, #474748, #000000, #545454);
     border-right: 2px solid rgb(33, 33, 33);
+    font-family: sans-serif;
     &:nth-child(1) {
       transform: translateY(-1.5cqw);
     }

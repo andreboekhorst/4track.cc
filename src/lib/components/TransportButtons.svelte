@@ -2,6 +2,19 @@
   import type { AudioEngine } from "$lib"
   import Light from "$lib/components/els/Light.svelte"
   import { playFx, playLoop, stopLoop } from "$lib/fx/soundfx"
+  import btnNormalImg from '../assets/btn_normal.png'
+  import btnPressedImg from '../assets/btn_pressed.png'
+  import { btnRecSvg, btnPlaySvg, btnPauseSvg, btnRewSvg, btnFwdSvg, btnStopSvg } from '../assets/svg-icons.js'
+
+  const btnIcons: Record<string, string> = {
+    record: btnRecSvg,
+    play: btnPlaySvg,
+    pause: btnPauseSvg,
+    rew: btnRewSvg,
+    ffwd: btnFwdSvg,
+    stop: btnStopSvg,
+  }
+
   let {
     engine,
     selectedTrack,
@@ -141,7 +154,7 @@
   }
 </script>
 
-<div class="ctrlButtons">
+<div class="ctrlButtons" style:--btn-normal="url({btnNormalImg})" style:--btn-pressed="url({btnPressedImg})">
   <div class="rec-light">
     <Light
       color="red"
@@ -162,6 +175,7 @@
           class="btn {type}"
           class:active={btn.pressed}
           onmousedown={() => clicky(type)}
+          style:--btn-icon="url('{btnIcons[type]}')"
         >
         </button>
       {/each}
@@ -241,7 +255,7 @@
     padding: 0;
     cursor: pointer;
     background-color: transparent;
-    background-image: url("../assets/btn_normal.png");
+    background-image: var(--btn-normal);
     background-size: cover;
     background-position: center;
     flex: 1;
@@ -257,33 +271,16 @@
       top: 18%;
       width: 100%;
       height: 17%;
+      background-image: var(--btn-icon);
       background-size: contain;
       background-position: center;
       mix-blend-mode: overlay;
       background-repeat: no-repeat;
     }
-    &.record:before {
-      background-image: url("../assets/btn_rec.svg");
-    }
-    &.play:before {
-      background-image: url("../assets/btn_play.svg");
-    }
-    &.pause:before {
-      background-image: url("../assets/btn_pause.svg");
-    }
-    &.rew:before {
-      background-image: url("../assets/btn_rew.svg");
-    }
-    &.ffwd:before {
-      background-image: url("../assets/btn_fwd.svg");
-    }
-    &.stop:before {
-      background-image: url("../assets/btn_stop.svg");
-    }
   }
   .btn.active,
   .btn:active {
-    background-image: url("../assets/btn_pressed.png");
+    background-image: var(--btn-pressed);
     box-shadow:
       inset 1.1cqw 0 3.4cqw rgba(0, 0, 0, 0.4),
       2.3cqw 2.3cqw 4.5cqw rgba(0, 0, 0, 0.6);

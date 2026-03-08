@@ -1,6 +1,10 @@
 <script lang="ts">
   import { AudioEngine } from "$lib/audio/engine.svelte.js"
   import type { HiddenTrackConfig } from "$lib/types.js"
+  import casetteHissUrl from "../assets/casette_hiss.mp3"
+  import noiseImg from "../assets/noise_50.jpg"
+  import logoImg from "../assets/logo.svg?url"
+  import openstudioImg from "../assets/openstudio.svg?url"
   import { onMount } from "svelte"
   import Knob from "$lib/components/els/Knob.svelte"
   import Light from "$lib/components/els/Light.svelte"
@@ -12,7 +16,7 @@
   import TransportButtons from "$lib/components/TransportButtons.svelte"
 
   let {
-    hiddenTracks = [{ url: "casette_hiss.mp3", volume: 0.08 }],
+    hiddenTracks = [{ url: casetteHissUrl, volume: 0.08 }],
     onready,
   }: {
     hiddenTracks?: HiddenTrackConfig[]
@@ -66,7 +70,12 @@
     </div>
   {/snippet}
 
-  <div class="fourtrack">
+  <div
+    class="fourtrack"
+    style:--bg-noise="url({noiseImg})"
+    style:--bg-logo="url({logoImg})"
+    style:--bg-openstudio="url({openstudioImg})"
+  >
     <div class="frame">
       <div class="app">
         <div class="parent">
@@ -108,10 +117,7 @@
           </div>
 
           <div class="cell-center" style="grid-area: 5 / 6 / 7 / 7">
-            <SlideSelect
-              bind:value={selectedTrack}
-              disabled={recordEngaged}
-            />
+            <SlideSelect bind:value={selectedTrack} disabled={recordEngaged} />
           </div>
 
           <div
@@ -184,11 +190,7 @@
             <div class="mic-status">
               <div class="ui-label">power</div>
               <div class="mic-status-light" title="Cassette status: xx">
-                <Light
-                  color="green"
-                  active={true}
-                  pulsing={false}
-                />
+                <Light color="green" active={true} pulsing={false} />
               </div>
             </div>
           </div>
@@ -250,6 +252,7 @@
     color: rgba(255, 255, 255, 0.6);
     text-transform: uppercase;
     font-size: 1.8cqh;
+    font-family: sans-serif;
   }
 
   .fourtrack {
@@ -323,7 +326,7 @@
     width: 100%;
     height: 100%;
     display: block;
-    background: url("../assets/noise_50.jpg");
+    background: var(--bg-noise);
     background-size: 50px;
     mix-blend-mode: multiply;
     position: absolute;
@@ -337,7 +340,7 @@
     gap: 5cqh;
   }
   .logo {
-    background: url("../assets/logo.svg");
+    background: var(--bg-logo);
     background-repeat: no-repeat;
     background-size: contain;
     background-position: top right;
@@ -346,7 +349,7 @@
   }
 
   .logo-tag {
-    background: url("../assets/openstudio.svg");
+    background: var(--bg-openstudio);
     background-repeat: no-repeat;
     background-size: contain;
     background-position: top right;

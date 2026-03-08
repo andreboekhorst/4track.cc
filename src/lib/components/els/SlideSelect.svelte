@@ -3,6 +3,8 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <script>
   import { playFx } from "$lib/fx/soundfx"
+  import slideSelectIndicatorImg from '../../assets/slideselect-indicator.svg?url'
+  import slideSelectThumbImg from '../../assets/slideselect-thumb.png'
   let dragging = $state(false)
   let trackEl = $state()
   let selected_i = $state(4)
@@ -66,7 +68,7 @@
   })
 </script>
 
-<div class="slider-holder">
+<div class="slider-holder" style:--bg-slideselect-indicator="url({slideSelectIndicatorImg})" style:--bg-slideselect-thumb="url({slideSelectThumbImg})">
   <div class="slideselect-indicator"></div>
   <div
     bind:this={trackEl}
@@ -100,7 +102,7 @@
   }
   .slideselect-indicator {
     position: relative;
-    background: url("../../assets/slideselect-indicator.svg");
+    background: var(--bg-slideselect-indicator);
     background-repeat: no-repeat;
     background-size: contain;
     width: 100%;
@@ -136,7 +138,7 @@
   .thumb {
     width: 75%;
     margin: 0 12%;
-    background: url("../../assets/slideselect-thumb.png");
+    background: var(--bg-slideselect-thumb);
     background-size: 100% 100%;
     position: absolute;
     border-radius: 1cqh;

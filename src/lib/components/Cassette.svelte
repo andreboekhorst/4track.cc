@@ -1,4 +1,7 @@
 <script lang="ts">
+  import cassetteImg from "../assets/cassette.jpg"
+  import rotatorImg from "../assets/rotator.png"
+
   let { speed, time, max, onchange, isRecording } = $props()
   let containerEl = $state()
   let dragging = $state(false)
@@ -49,6 +52,8 @@
       onpointerup={stopDrag}
       onpointerleave={stopDrag}
       bind:this={containerEl}
+      style:--bg-cassette="url({cassetteImg})"
+      style:--bg-rotator="url({rotatorImg})"
     >
       <div class="window_inset">
         <div class="shadow"></div>
@@ -89,7 +94,6 @@
   .window {
     background-color: #212124;
     border-radius: 1cqw;
-    width: 85%;
     margin: 36cqh 10cqw 20cqh 5cqw;
     padding: 1.5cqw 8cqw;
     position: relative;
@@ -102,7 +106,7 @@
     }
 
     .window_inset {
-      background: url("../assets/cassette.jpg");
+      background: var(--bg-cassette);
       background-size: 109%;
       background-position: -5cqh -15cqw;
       border-radius: 2.5cqw;
@@ -137,7 +141,7 @@
     .rotater {
       width: 16cqw;
       height: 16cqw;
-      background: url("../assets/rotator.png");
+      background: var(--bg-rotator);
       background-size: contain;
       background-repeat: no-repeat;
       margin-top: -2.5cqh;

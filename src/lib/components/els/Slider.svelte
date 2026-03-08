@@ -2,6 +2,9 @@
 <!-- svelte-ignore a11y_interactive_supports_focus -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <script>
+  import sliderIndicatorImg from '../../assets/slider-indicator.svg?url'
+  import sliderImg from '../../assets/slider.png'
+
   let { value = $bindable(0), min = 0, max = 1, onchange, btnHeight = 0.35, padding = 1 } = $props()
   let dragging = $state(false)
   let trackEl = $state()
@@ -45,7 +48,7 @@
   }
 </script>
 
-<div class="slider-holder">
+<div class="slider-holder" style:--bg-slider-indicator="url({sliderIndicatorImg})" style:--bg-slider="url({sliderImg})">
   <div
     class="slider-indicator"
     style="height: {(1 - btnHeight) * 100}%; top: {(btnHeight / 2) * 100}%"
@@ -82,7 +85,7 @@
 
   .slider-indicator {
     position: relative;
-    background: url("../../assets/slider-indicator.svg");
+    background: var(--bg-slider-indicator);
     background-repeat: no-repeat;
     background-size: contain;
     width: 55cqw;
@@ -118,7 +121,7 @@
   .thumb {
     width: 80%;
     margin: 0 10%;
-    background: url("../../assets/slider.png");
+    background: var(--bg-slider);
     background-size: 100% 100%;
     position: absolute;
     top: 0%;

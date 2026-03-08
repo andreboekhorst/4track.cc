@@ -5,6 +5,7 @@
   let { timestamp } = $props()
   import { playFx } from "$lib/fx/soundfx"
   import DigitRoller from "./DigitRoller.svelte"
+  import counterBgImg from '../../assets/counter_bg.png'
 
   let correction = $state(0)
   function count_to_str(nr: number) {
@@ -32,7 +33,7 @@
 
 <!-- <div>{count_to_str(timestamp)}</div> -->
 
-<div class="wrapper">
+<div class="wrapper" style:--bg-counter="url({counterBgImg})">
   <div class="counter">
     <a onmousedown={() => reset()}>&nbsp;</a>
     <div class="number-ticker">
@@ -58,7 +59,7 @@
   .counter {
     padding: 15.2cqw 17cqh 13.8cqw;
     color: rgb(216, 216, 216);
-    background-image: url("../../assets/counter_bg.png");
+    background-image: var(--bg-counter);
     background-size: 100% 100%;
     background-repeat: no-repeat;
     width: 100cqw;
