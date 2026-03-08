@@ -1,14 +1,10 @@
 <script lang="ts">
-  import favicon from "$lib/assets/favicon.svg"
-
-  let { children } = $props()
+  import FourTrack from "$lib/components/FourTrack.svelte"
 </script>
 
-<svelte:head>
-  <link rel="icon" href={favicon} />
-</svelte:head>
-
-{@render children()}
+<div class="align">
+  <FourTrack />
+</div>
 
 <style>
   :global(*) {
@@ -51,35 +47,10 @@
     }
   }
 
-  :global(header) {
-    height: 10cqh;
+  .align {
     display: flex;
-    justify-content: right;
-    padding: 20px;
-    position: absolute;
-  }
-
-  :global(.cell-center) {
-    display: flex;
-    align-items: center;
     justify-content: center;
-  }
-
-  :global(.cell-bottom) {
-    display: flex;
-    align-items: end;
-    justify-content: center;
-  }
-  :global(.cell-right) {
-    display: flex;
     align-items: center;
-    justify-content: right;
-  }
-
-  :global(.ui-label) {
-    color: rgba(255, 255, 255, 0.6);
-    text-transform: uppercase;
-    /* letter-spacing: 0.1vw; */
-    font-size: 1.8cqh;
+    height: 100dvh;
   }
 </style>

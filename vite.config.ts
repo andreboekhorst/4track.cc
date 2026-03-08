@@ -1,5 +1,4 @@
-import devtoolsJson from "vite-plugin-devtools-json"
-import { sveltekit } from "@sveltejs/kit/vite"
+import { svelte } from "@sveltejs/vite-plugin-svelte"
 import { defineConfig } from "vite"
 import fs from "fs"
 
@@ -9,7 +8,13 @@ const httpsConfig =
     : undefined
 
 export default defineConfig({
-  plugins: [sveltekit(), devtoolsJson()],
+  plugins: [svelte()],
+  publicDir: "static",
+  resolve: {
+    alias: {
+      "$lib": "/src/lib",
+    },
+  },
   server: {
     https: httpsConfig,
     host: true,

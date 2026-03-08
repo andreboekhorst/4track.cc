@@ -1,4 +1,4 @@
-import { browser } from "$app/environment"
+const browser = typeof window !== 'undefined'
 
 const soundPaths = {
   stop: "/fx/stop.wav",

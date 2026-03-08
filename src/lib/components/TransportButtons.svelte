@@ -118,13 +118,20 @@
         }
         break
       case "rew":
+        if (btns.play.pressed || btns.ffwd.pressed) {
+          playFx("stop")
+        }
         reset()
-        playLoop("ffwd")
-
-        btns.rew.pressed = true
-        speed = -8
+        if (engine.position != 0) {
+          playLoop("ffwd")
+          btns.rew.pressed = true
+          speed = -8
+        }
         break
       case "ffwd":
+        if (btns.play.pressed || btns.rew.pressed) {
+          playFx("stop")
+        }
         reset()
         playLoop("ffwd")
         btns.ffwd.pressed = true
