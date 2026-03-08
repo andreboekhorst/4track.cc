@@ -674,7 +674,7 @@ export class AudioEngine {
   }
 
   /** Loads a .4trk file, restoring all track buffers, mixer settings, and master volume. */
-  async importProject(file: File): Promise<void> {
+  async importProject(file: File | Blob): Promise<void> {
     const { masterVolume } = await _importProject(file, this.tracks, () =>
       this.ensureContext(),
     )

@@ -18,9 +18,15 @@
   let {
     hiddenTracks = [{ url: casetteHissUrl, volume: 0.08 }],
     onready,
+    save = $bindable(),
+    load = $bindable(),
+    initialProject,
   }: {
     hiddenTracks?: HiddenTrackConfig[]
     onready?: (detail: { engine: AudioEngine }) => void
+    save?: () => Blob
+    load?: (source: File | string) => Promise<void>
+    initialProject?: string | File
   } = $props()
 
   let engine: AudioEngine | null = $state(null)
@@ -28,9 +34,22 @@
   let speed = $state(0)
   let recordEngaged = $state(false)
 
-  onMount(() => {
+  onMount(async () => {
     engine = new AudioEngine({ hiddenTracks })
     engine.initAudioContext()
+
+    save = () => engine!.exportProject()
+    load = async (source: File | string) => {
+      const file = typeof source === 'string'
+        ? new File([await (await fetch(source)).arrayBuffer()], 'project.4trk')
+        : source
+      await engine!.importProject(file)
+    }
+
+    if (initialProject) {
+      await load(initialProject)
+    }
+
     onready?.({ engine })
     return () => engine?.dispose()
   })

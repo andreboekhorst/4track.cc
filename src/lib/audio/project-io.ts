@@ -54,7 +54,7 @@ export function exportProject(
 }
 
 export async function importProject(
-  file: File,
+  file: File | Blob,
   tracks: Track[],
   ensureContext: () => AudioContext,
 ): Promise<{ masterVolume: number }> {
