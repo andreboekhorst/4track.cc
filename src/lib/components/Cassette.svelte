@@ -102,7 +102,7 @@
     }
 
     .window_inset {
-      background: url("/cassette.jpg");
+      background: url("../assets/cassette.jpg");
       background-size: 109%;
       background-position: -5cqh -15cqw;
       border-radius: 2.5cqw;
@@ -137,7 +137,7 @@
     .rotater {
       width: 16cqw;
       height: 16cqw;
-      background: url("/rotator.png");
+      background: url("../assets/rotator.png");
       background-size: contain;
       background-repeat: no-repeat;
       margin-top: -2.5cqh;

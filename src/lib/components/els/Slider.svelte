@@ -82,7 +82,7 @@
 
   .slider-indicator {
     position: relative;
-    background: url("/slider-indicator.svg");
+    background: url("../../assets/slider-indicator.svg");
     background-repeat: no-repeat;
     background-size: contain;
     width: 55cqw;
@@ -118,7 +118,7 @@
   .thumb {
     width: 80%;
     margin: 0 10%;
-    background: url("/slider.png");
+    background: url("../../assets/slider.png");
     background-size: 100% 100%;
     position: absolute;
     top: 0%;

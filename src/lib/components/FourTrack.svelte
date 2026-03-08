@@ -323,7 +323,7 @@
     width: 100%;
     height: 100%;
     display: block;
-    background: url("/noise_50.jpg");
+    background: url("../assets/noise_50.jpg");
     background-size: 50px;
     mix-blend-mode: multiply;
     position: absolute;
@@ -337,7 +337,7 @@
     gap: 5cqh;
   }
   .logo {
-    background: url("/logo.svg");
+    background: url("../assets/logo.svg");
     background-repeat: no-repeat;
     background-size: contain;
     background-position: top right;
@@ -346,7 +346,7 @@
   }
 
   .logo-tag {
-    background: url("/openstudio.svg");
+    background: url("../assets/openstudio.svg");
     background-repeat: no-repeat;
     background-size: contain;
     background-position: top right;

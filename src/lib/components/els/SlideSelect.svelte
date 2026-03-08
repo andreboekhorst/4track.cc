@@ -100,7 +100,7 @@
   }
   .slideselect-indicator {
     position: relative;
-    background: url("/slideselect-indicator.svg");
+    background: url("../../assets/slideselect-indicator.svg");
     background-repeat: no-repeat;
     background-size: contain;
     width: 100%;
@@ -136,7 +136,7 @@
   .thumb {
     width: 75%;
     margin: 0 12%;
-    background: url("/slideselect-thumb.png");
+    background: url("../../assets/slideselect-thumb.png");
     background-size: 100% 100%;
     position: absolute;
     border-radius: 1cqh;

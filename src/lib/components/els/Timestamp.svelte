@@ -43,13 +43,11 @@
   </div>
 </div>
 
-<style lang="scss">
+<style>
   .number-ticker {
     display: flex;
     height: 17cqw;
     overflow: hidden;
-    .index {
-    }
   }
 
   .wrapper {
@@ -60,7 +58,7 @@
   .counter {
     padding: 15.2cqw 17cqh 13.8cqw;
     color: rgb(216, 216, 216);
-    background-image: url("/counter_bg.png");
+    background-image: url("../../assets/counter_bg.png");
     background-size: 100% 100%;
     background-repeat: no-repeat;
     width: 100cqw;

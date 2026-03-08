@@ -1,13 +1,21 @@
+import stopUrl from '../assets/fx/stop.wav?url'
+import ffwdUrl from '../assets/fx/ffwd.wav?url'
+import pauseUrl from '../assets/fx/pause.wav?url'
+import playUrl from '../assets/fx/play.wav?url'
+import trackUrl from '../assets/fx/track.wav?url'
+import counterUrl from '../assets/fx/counter.wav?url'
+import recordUrl from '../assets/fx/record.wav?url'
+
 const browser = typeof window !== 'undefined'
 
 const soundPaths = {
-  stop: "/fx/stop.wav",
-  ffwd: "/fx/ffwd.wav",
-  pause: "/fx/pause.wav",
-  play: "/fx/play.wav",
-  track: "/fx/track.wav",
-  counter: "/fx/counter.wav",
-  record: "/fx/record.wav",
+  stop: stopUrl,
+  ffwd: ffwdUrl,
+  pause: pauseUrl,
+  play: playUrl,
+  track: trackUrl,
+  counter: counterUrl,
+  record: recordUrl,
 }
 
 type SoundKey = keyof typeof soundPaths

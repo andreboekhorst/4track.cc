@@ -241,7 +241,7 @@
     padding: 0;
     cursor: pointer;
     background-color: transparent;
-    background-image: url("/btn_normal.png");
+    background-image: url("../assets/btn_normal.png");
     background-size: cover;
     background-position: center;
     flex: 1;
@@ -263,27 +263,27 @@
       background-repeat: no-repeat;
     }
     &.record:before {
-      background-image: url("/btn_rec.svg");
+      background-image: url("../assets/btn_rec.svg");
     }
     &.play:before {
-      background-image: url("/btn_play.svg");
+      background-image: url("../assets/btn_play.svg");
     }
     &.pause:before {
-      background-image: url("/btn_pause.svg");
+      background-image: url("../assets/btn_pause.svg");
     }
     &.rew:before {
-      background-image: url("/btn_rew.svg");
+      background-image: url("../assets/btn_rew.svg");
     }
     &.ffwd:before {
-      background-image: url("/btn_fwd.svg");
+      background-image: url("../assets/btn_fwd.svg");
     }
     &.stop:before {
-      background-image: url("/btn_stop.svg");
+      background-image: url("../assets/btn_stop.svg");
     }
   }
   .btn.active,
   .btn:active {
-    background-image: url("/btn_pressed.png");
+    background-image: url("../assets/btn_pressed.png");
     box-shadow:
       inset 1.1cqw 0 3.4cqw rgba(0, 0, 0, 0.4),
       2.3cqw 2.3cqw 4.5cqw rgba(0, 0, 0, 0.6);

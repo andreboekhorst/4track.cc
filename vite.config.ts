@@ -9,7 +9,7 @@ const httpsConfig =
 
 export default defineConfig({
   plugins: [svelte()],
-  publicDir: "static",
+  publicDir: "src/lib/assets",
   resolve: {
     alias: {
       "$lib": "/src/lib",

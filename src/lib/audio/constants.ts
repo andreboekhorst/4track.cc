@@ -1,6 +1,7 @@
 // Default configuration and constraints for the audio engine.
 
 import type { AudioEngineConfig } from '../types.js';
+import workletUrl from '../assets/recorder-worklet.js?url';
 
 export const PLAYBACK_TICK_MS = 50;
 
@@ -9,7 +10,7 @@ export const DEFAULT_CONFIG: AudioEngineConfig = {
   bitDepth: 16, // 8 = lo-fi, 16 = CD quality, 32 = float (uncompressed)
   maxSeconds: 180, // max recording length per track (seconds)
   trackCount: 4, // number of mixer tracks
-  workletUrl: 'recorder-worklet.js',
+  workletUrl,
   inputFx: [
     {
       type: 'trim',
